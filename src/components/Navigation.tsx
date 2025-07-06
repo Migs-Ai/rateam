@@ -1,10 +1,27 @@
+
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { Search, User, Menu, X } from "lucide-react";
+import { Search, User, Menu, X, LogOut } from "lucide-react";
+import { useAuth } from "@/hooks/useAuth";
+import { useNavigate } from "react-router-dom";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuLabel,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
 
 const Navigation = () => {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
+  const { user, signOut } = useAuth();
+  const navigate = useNavigate();
+
+  const handleSignOut = async () => {
+    await signOut();
+    navigate("/");
+  };
 
   return (
     <nav className="sticky top-0 z-50 bg-card/95 backdrop-blur-sm border-b border-border shadow-card">
@@ -34,15 +51,47 @@ const Navigation = () => {
             </a>
           </div>
 
-          {/* Auth Buttons */}
+          {/* Auth Section */}
           <div className="hidden md:flex items-center space-x-3">
-            <Button variant="outline" size="sm">
-              <User className="w-4 h-4 mr-2" />
-              Sign In
-            </Button>
-            <Button size="sm" className="bg-gradient-primary text-white border-0 hover:shadow-soft">
-              Join Now
-            </Button>
+            {user ? (
+              <DropdownMenu>
+                <DropdownMenuTrigger asChild>
+                  <Button variant="outline" size="sm" className="flex items-center gap-2">
+                    <User className="w-4 h-4" />
+                    {user.user_metadata?.full_name || user.email?.split('@')[0] || 'User'}
+                  </Button>
+                </DropdownMenuTrigger>
+                <DropdownMenuContent align="end">
+                  <DropdownMenuLabel>My Account</DropdownMenuLabel>
+                  <DropdownMenuSeparator />
+                  <DropdownMenuItem onClick={() => navigate("/profile")}>
+                    Profile
+                  </DropdownMenuItem>
+                  <DropdownMenuItem onClick={() => navigate("/admin")} className="text-purple-600">
+                    Admin
+                  </DropdownMenuItem>
+                  <DropdownMenuSeparator />
+                  <DropdownMenuItem onClick={handleSignOut} className="text-red-600">
+                    <LogOut className="w-4 h-4 mr-2" />
+                    Sign Out
+                  </DropdownMenuItem>
+                </DropdownMenuContent>
+              </DropdownMenu>
+            ) : (
+              <>
+                <Button variant="outline" size="sm" onClick={() => navigate("/auth")}>
+                  <User className="w-4 h-4 mr-2" />
+                  Sign In
+                </Button>
+                <Button 
+                  size="sm" 
+                  className="bg-gradient-primary text-white border-0 hover:shadow-soft"
+                  onClick={() => navigate("/auth")}
+                >
+                  Join Now
+                </Button>
+              </>
+            )}
           </div>
 
           {/* Mobile Menu Button */}
@@ -73,13 +122,37 @@ const Navigation = () => {
                 About
               </a>
               <div className="flex flex-col space-y-2 pt-3 border-t border-border">
-                <Button variant="outline" size="sm">
-                  <User className="w-4 h-4 mr-2" />
-                  Sign In
-                </Button>
-                <Button size="sm" className="bg-gradient-primary text-white border-0">
-                  Join Now
-                </Button>
+                {user ? (
+                  <>
+                    <p className="text-sm text-muted-foreground px-2">
+                      Welcome, {user.user_metadata?.full_name || user.email?.split('@')[0] || 'User'}
+                    </p>
+                    <Button variant="outline" size="sm" onClick={() => navigate("/profile")}>
+                      Profile
+                    </Button>
+                    <Button variant="outline" size="sm" onClick={() => navigate("/admin")} className="text-purple-600">
+                      Admin
+                    </Button>
+                    <Button variant="outline" size="sm" onClick={handleSignOut} className="text-red-600">
+                      <LogOut className="w-4 h-4 mr-2" />
+                      Sign Out
+                    </Button>
+                  </>
+                ) : (
+                  <>
+                    <Button variant="outline" size="sm" onClick={() => navigate("/auth")}>
+                      <User className="w-4 h-4 mr-2" />
+                      Sign In
+                    </Button>
+                    <Button 
+                      size="sm" 
+                      className="bg-gradient-primary text-white border-0"
+                      onClick={() => navigate("/auth")}
+                    >
+                      Join Now
+                    </Button>
+                  </>
+                )}
               </div>
             </div>
           </div>
