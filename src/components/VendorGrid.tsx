@@ -1,3 +1,4 @@
+
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -5,118 +6,27 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Badge } from "@/components/ui/badge";
 import VendorCard from "./VendorCard";
 import { Search, Filter } from "lucide-react";
-
-// Mock data for demonstration
-const mockVendors = [
-  {
-    id: "1",
-    name: "Mama's Kitchen",
-    category: "Restaurant",
-    description: "Authentic local cuisine with traditional flavors and fresh ingredients. Family-owned restaurant serving the community for over 15 years.",
-    rating: 4.8,
-    reviewCount: 127,
-    location: "Downtown District, Main Street",
-    phone: "+1 (555) 123-4567",
-    image: "https://images.unsplash.com/photo-1517248135467-4c7edcad34c4?w=400&h=300&fit=crop",
-    isOpen: true,
-    featured: true
-  },
-  {
-    id: "2",
-    name: "TechFix Solutions",
-    category: "Electronics Repair",
-    description: "Professional electronics repair service for phones, laptops, and tablets. Quick turnaround with quality guarantee.",
-    rating: 4.6,
-    reviewCount: 89,
-    location: "Tech Plaza, Second Floor",
-    phone: "+1 (555) 987-6543",
-    image: "https://images.unsplash.com/photo-1581092160607-ee22621dd758?w=400&h=300&fit=crop",
-    isOpen: true
-  },
-  {
-    id: "3",
-    name: "Green Garden Supplies",
-    category: "Garden Center",
-    description: "Complete gardening supplies, plants, tools, and expert advice for your garden projects.",
-    rating: 4.4,
-    reviewCount: 156,
-    location: "Garden District, Oak Avenue",
-    phone: "+1 (555) 456-7890",
-    image: "https://images.unsplash.com/photo-1416879595882-3373a0480b5b?w=400&h=300&fit=crop",
-    isOpen: false
-  },
-  {
-    id: "4",
-    name: "Artisan Coffee Co.",
-    category: "Coffee Shop",
-    description: "Specialty coffee roasted in-house daily. Comfortable workspace with free WiFi and delicious pastries.",
-    rating: 4.9,
-    reviewCount: 203,
-    location: "Arts Quarter, Pine Street",
-    phone: "+1 (555) 321-0987",
-    image: "https://images.unsplash.com/photo-1501339847302-ac426a4a7cbb?w=400&h=300&fit=crop",
-    isOpen: true,
-    featured: true
-  },
-  {
-    id: "5",
-    name: "QuickWash Laundromat",
-    category: "Laundry Service",
-    description: "24-hour self-service laundromat with modern machines and drop-off wash & fold service.",
-    rating: 4.2,
-    reviewCount: 74,
-    location: "Residential Area, Elm Street",
-    image: "https://images.unsplash.com/photo-1517677208171-0bc6725a3e60?w=400&h=300&fit=crop",
-    isOpen: true
-  },
-  {
-    id: "6",
-    name: "Bella's Beauty Salon",
-    category: "Beauty & Wellness",
-    description: "Full-service beauty salon offering haircuts, styling, coloring, and spa treatments in a relaxing environment.",
-    rating: 4.7,
-    reviewCount: 98,
-    location: "Beauty District, Rose Avenue",
-    phone: "+1 (555) 654-3210",
-    image: "https://images.unsplash.com/photo-1560066984-138dadb4c035?w=400&h=300&fit=crop",
-    isOpen: true
-  }
-];
-
-const categories = [
-  "All Categories",
-  "Restaurant",
-  "Electronics Repair", 
-  "Garden Center",
-  "Coffee Shop",
-  "Laundry Service",
-  "Beauty & Wellness"
-];
+import { useVendors } from "@/hooks/useVendors";
+import { useCategories } from "@/hooks/useCategories";
 
 const VendorGrid = () => {
   const [searchTerm, setSearchTerm] = useState("");
   const [selectedCategory, setSelectedCategory] = useState("All Categories");
   const [sortBy, setSortBy] = useState("rating");
 
-  const filteredVendors = mockVendors
-    .filter(vendor => {
-      const matchesSearch = vendor.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                           vendor.description.toLowerCase().includes(searchTerm.toLowerCase());
-      const matchesCategory = selectedCategory === "All Categories" || vendor.category === selectedCategory;
-      return matchesSearch && matchesCategory;
-    })
-    .sort((a, b) => {
-      switch (sortBy) {
-        case "rating":
-          return b.rating - a.rating;
-        case "reviews":
-          return b.reviewCount - a.reviewCount;
-        case "name":
-          return a.name.localeCompare(b.name);
-        default:
-          return 0;
-      }
-    });
+  const { data: vendors = [], isLoading: vendorsLoading, error: vendorsError } = useVendors(
+    searchTerm, 
+    selectedCategory === "All Categories" ? undefined : selectedCategory, 
+    sortBy
+  );
+  
+  const { data: categories = [], isLoading: categoriesLoading } = useCategories();
+
+  const categoryOptions = ["All Categories", ...categories.map(cat => cat.name)];
+
+  if (vendorsError) {
+    console.error('Error loading vendors:', vendorsError);
+  }
 
   return (
     <section id="vendors" className="py-16 bg-background">
@@ -146,12 +56,12 @@ const VendorGrid = () => {
             </div>
 
             {/* Category Filter */}
-            <Select value={selectedCategory} onValueChange={setSelectedCategory}>
+            <Select value={selectedCategory} onValueChange={setSelectedCategory} disabled={categoriesLoading}>
               <SelectTrigger className="w-full lg:w-48">
                 <SelectValue placeholder="Category" />
               </SelectTrigger>
               <SelectContent>
-                {categories.map((category) => (
+                {categoryOptions.map((category) => (
                   <SelectItem key={category} value={category}>
                     {category}
                   </SelectItem>
@@ -205,15 +115,34 @@ const VendorGrid = () => {
         {/* Results Count */}
         <div className="mb-6">
           <p className="text-muted-foreground">
-            Showing {filteredVendors.length} of {mockVendors.length} vendors
+            {vendorsLoading ? "Loading..." : `Showing ${vendors.length} vendors`}
           </p>
         </div>
 
         {/* Vendor Grid */}
-        {filteredVendors.length > 0 ? (
+        {vendorsLoading ? (
+          <div className="text-center py-12">
+            <p className="text-muted-foreground">Loading vendors...</p>
+          </div>
+        ) : vendors.length > 0 ? (
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-            {filteredVendors.map((vendor) => (
-              <VendorCard key={vendor.id} vendor={vendor} />
+            {vendors.map((vendor) => (
+              <VendorCard 
+                key={vendor.id} 
+                vendor={{
+                  id: vendor.id,
+                  name: vendor.business_name,
+                  category: vendor.categories?.name || vendor.category || 'Uncategorized',
+                  description: vendor.description || '',
+                  rating: vendor.rating || 0,
+                  reviewCount: vendor.review_count || 0,
+                  location: vendor.location || '',
+                  phone: vendor.phone || undefined,
+                  image: vendor.image_url || 'https://images.unsplash.com/photo-1560472354-b33ff0c44a43?w=400&h=300&fit=crop',
+                  isOpen: true, // We can add business hours later
+                  featured: false // We can add featured flag later
+                }}
+              />
             ))}
           </div>
         ) : (
@@ -224,7 +153,10 @@ const VendorGrid = () => {
               </div>
               <h3 className="text-lg font-semibold text-foreground mb-2">No vendors found</h3>
               <p className="text-muted-foreground mb-4">
-                Try adjusting your search criteria or browse all categories.
+                {vendorsError 
+                  ? "There was an error loading vendors. Please try again later."
+                  : "Try adjusting your search criteria or browse all categories."
+                }
               </p>
               <Button
                 onClick={() => {
