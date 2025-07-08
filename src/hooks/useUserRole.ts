@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from './useAuth';
@@ -10,10 +11,13 @@ export const useUserRole = () => {
   useEffect(() => {
     const fetchUserRole = async () => {
       if (!user) {
+        console.log('useUserRole: No user found');
         setRole(null);
         setLoading(false);
         return;
       }
+
+      console.log('useUserRole: Fetching role for user:', user.email, user.id);
 
       try {
         const { data, error } = await supabase
@@ -26,6 +30,7 @@ export const useUserRole = () => {
           console.error('Error fetching user role:', error);
         }
 
+        console.log('useUserRole: Role data:', data);
         setRole(data?.role || 'user');
       } catch (error) {
         console.error('Error fetching user role:', error);
@@ -40,6 +45,8 @@ export const useUserRole = () => {
 
   const isAdmin = role === 'admin' || role === 'super_admin';
   const isVendor = role === 'vendor';
+
+  console.log('useUserRole: Final values - role:', role, 'isAdmin:', isAdmin, 'isVendor:', isVendor);
 
   return { role, loading, isAdmin, isVendor };
 };

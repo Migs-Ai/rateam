@@ -32,7 +32,14 @@ const App = () => (
                 </ProtectedRoute>
               } 
             />
-            <Route path="/admin" element={<Admin />} />
+            <Route 
+              path="/admin" 
+              element={
+                <ProtectedRoute requireAuth={true}>
+                  <Admin />
+                </ProtectedRoute>
+              } 
+            />
             <Route path="/about" element={<About />} />
             <Route path="/polls" element={<Polls />} />
             {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
