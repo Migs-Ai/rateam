@@ -37,18 +37,18 @@ const Navigation = () => {
 
           {/* Desktop Navigation */}
           <div className="hidden md:flex items-center space-x-8">
-            <a href="#" className="text-foreground hover:text-primary transition-smooth">
+            <button onClick={() => navigate("/")} className="text-foreground hover:text-primary transition-smooth">
               Home
-            </a>
+            </button>
             <a href="#vendors" className="text-foreground hover:text-primary transition-smooth">
               Vendors
             </a>
-            <a href="#polls" className="text-foreground hover:text-primary transition-smooth">
+            <button onClick={() => navigate("/polls")} className="text-foreground hover:text-primary transition-smooth">
               Polls
-            </a>
-            <a href="#about" className="text-foreground hover:text-primary transition-smooth">
+            </button>
+            <button onClick={() => navigate("/about")} className="text-foreground hover:text-primary transition-smooth">
               About
-            </a>
+            </button>
           </div>
 
           {/* Auth Section */}
@@ -109,18 +109,18 @@ const Navigation = () => {
         {isMenuOpen && (
           <div className="md:hidden py-4 border-t border-border">
             <div className="flex flex-col space-y-3">
-              <a href="#" className="text-foreground hover:text-primary transition-smooth py-2">
+              <button onClick={() => navigate("/")} className="text-foreground hover:text-primary transition-smooth py-2 text-left">
                 Home
-              </a>
+              </button>
               <a href="#vendors" className="text-foreground hover:text-primary transition-smooth py-2">
                 Vendors
               </a>
-              <a href="#polls" className="text-foreground hover:text-primary transition-smooth py-2">
+              <button onClick={() => navigate("/polls")} className="text-foreground hover:text-primary transition-smooth py-2 text-left">
                 Polls
-              </a>
-              <a href="#about" className="text-foreground hover:text-primary transition-smooth py-2">
+              </button>
+              <button onClick={() => navigate("/about")} className="text-foreground hover:text-primary transition-smooth py-2 text-left">
                 About
-              </a>
+              </button>
               <div className="flex flex-col space-y-2 pt-3 border-t border-border">
                 {user ? (
                   <>
