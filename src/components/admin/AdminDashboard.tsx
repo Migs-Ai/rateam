@@ -1,3 +1,4 @@
+
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Users, Building2, MessageSquare, BarChart3, Star, TrendingUp } from "lucide-react";
@@ -5,6 +6,7 @@ import { AdminAnalytics } from "./AdminAnalytics";
 import { UserManagement } from "./UserManagement";
 import { VendorManagement } from "./VendorManagement";
 import { ReviewManagement } from "./ReviewManagement";
+import { PollManagement } from "./PollManagement";
 
 const AdminDashboard = () => {
   return (
@@ -55,15 +57,7 @@ const AdminDashboard = () => {
         </TabsContent>
 
         <TabsContent value="polls" className="mt-6">
-          <Card>
-            <CardHeader>
-              <CardTitle>Poll Management</CardTitle>
-              <CardDescription>Manage community polls and voting</CardDescription>
-            </CardHeader>
-            <CardContent>
-              <p className="text-muted-foreground">Poll management features coming soon...</p>
-            </CardContent>
-          </Card>
+          <PollManagement />
         </TabsContent>
       </Tabs>
     </div>

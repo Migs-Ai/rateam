@@ -4,209 +4,211 @@ import { useAuth } from "@/hooks/useAuth";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
-import { useForm } from "react-hook-form";
-import { useToast } from "@/hooks/use-toast";
-import { Eye, EyeOff, ArrowLeft } from "lucide-react";
-import { useNavigate } from "react-router-dom";
-
-interface AuthFormData {
-  email: string;
-  password: string;
-  fullName?: string;
-}
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Label } from "@/components/ui/label";
+import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
+import { Alert, AlertDescription } from "@/components/ui/alert";
+import { Loader2, Building2, User } from "lucide-react";
+import { supabase } from "@/integrations/supabase/client";
 
 const AuthPage = () => {
-  const [isSignUp, setIsSignUp] = useState(false);
-  const [showPassword, setShowPassword] = useState(false);
-  const [loading, setLoading] = useState(false);
-  const { signIn, signUp } = useAuth();
-  const { toast } = useToast();
-  const navigate = useNavigate();
+  const { signIn, signUp, loading } = useAuth();
+  const [email, setEmail] = useState("");
+  const [password, setPassword] = useState("");
+  const [fullName, setFullName] = useState("");
+  const [selectedRole, setSelectedRole] = useState<"user" | "vendor">("user");
+  const [error, setError] = useState("");
+  const [isLoading, setIsLoading] = useState(false);
 
-  const form = useForm<AuthFormData>({
-    defaultValues: {
-      email: "",
-      password: "",
-      fullName: "",
-    },
-  });
+  const handleSignIn = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setError("");
+    setIsLoading(true);
 
-  const onSubmit = async (data: AuthFormData) => {
-    setLoading(true);
+    const { error } = await signIn(email, password);
     
-    try {
-      let result;
-      if (isSignUp) {
-        result = await signUp(data.email, data.password, data.fullName);
-      } else {
-        result = await signIn(data.email, data.password);
-      }
+    if (error) {
+      setError(error.message);
+    }
+    
+    setIsLoading(false);
+  };
 
-      if (result.error) {
-        console.error('Auth error:', result.error);
-        toast({
-          title: "Error",
-          description: result.error.message || "An error occurred during authentication",
-          variant: "destructive",
-        });
-      } else {
-        toast({
-          title: "Success",
-          description: isSignUp 
-            ? "Account created successfully! Please check your email to verify your account." 
-            : "Signed in successfully!",
-        });
+  const handleSignUp = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setError("");
+    setIsLoading(true);
+
+    const { error } = await signUp(email, password, fullName);
+    
+    if (error) {
+      setError(error.message);
+    } else {
+      // After successful signup, assign the selected role
+      const { data: { user } } = await supabase.auth.getUser();
+      if (user) {
+        const { error: roleError } = await supabase
+          .from('user_roles')
+          .insert({
+            user_id: user.id,
+            role: selectedRole
+          });
         
-        if (!isSignUp) {
-          navigate("/");
+        if (roleError) {
+          console.error('Error assigning role:', roleError);
         }
       }
-    } catch (error) {
-      console.error('Unexpected error:', error);
-      toast({
-        title: "Error",
-        description: "An unexpected error occurred",
-        variant: "destructive",
-      });
-    } finally {
-      setLoading(false);
     }
+    
+    setIsLoading(false);
   };
+
+  if (loading) {
+    return (
+      <div className="min-h-screen bg-background flex items-center justify-center">
+        <div className="text-center">
+          <Loader2 className="w-8 h-8 animate-spin mx-auto mb-4" />
+          <p className="text-muted-foreground">Loading...</p>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen bg-background flex items-center justify-center p-4">
-      <div className="w-full max-w-md">
-        <Button
-          variant="ghost"
-          onClick={() => navigate("/")}
-          className="mb-6 flex items-center gap-2"
-        >
-          <ArrowLeft className="w-4 h-4" />
-          Back to Home
-        </Button>
-
-        <Card>
-          <CardHeader className="text-center">
-            <CardTitle className="text-2xl font-bold">
-              {isSignUp ? "Create Account" : "Welcome Back"}
-            </CardTitle>
-            <CardDescription>
-              {isSignUp 
-                ? "Join Rate Am to discover and review local businesses" 
-                : "Sign in to your Rate Am account"
-              }
-            </CardDescription>
-          </CardHeader>
-          <CardContent>
-            <Form {...form}>
-              <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
-                {isSignUp && (
-                  <FormField
-                    control={form.control}
-                    name="fullName"
-                    rules={{ required: "Full name is required" }}
-                    render={({ field }) => (
-                      <FormItem>
-                        <FormLabel>Full Name</FormLabel>
-                        <FormControl>
-                          <Input placeholder="Enter your full name" {...field} />
-                        </FormControl>
-                        <FormMessage />
-                      </FormItem>
-                    )}
+      <Card className="w-full max-w-md">
+        <CardHeader className="text-center">
+          <CardTitle className="text-2xl font-bold">Welcome to Rate Am</CardTitle>
+          <CardDescription>
+            Sign in to your account or create a new one
+          </CardDescription>
+        </CardHeader>
+        <CardContent>
+          <Tabs defaultValue="signin" className="w-full">
+            <TabsList className="grid w-full grid-cols-2">
+              <TabsTrigger value="signin">Sign In</TabsTrigger>
+              <TabsTrigger value="signup">Sign Up</TabsTrigger>
+            </TabsList>
+            
+            <TabsContent value="signin">
+              <form onSubmit={handleSignIn} className="space-y-4">
+                <div className="space-y-2">
+                  <Label htmlFor="email">Email</Label>
+                  <Input
+                    id="email"
+                    type="email"
+                    value={email}
+                    onChange={(e) => setEmail(e.target.value)}
+                    required
                   />
+                </div>
+                <div className="space-y-2">
+                  <Label htmlFor="password">Password</Label>
+                  <Input
+                    id="password"
+                    type="password"
+                    value={password}
+                    onChange={(e) => setPassword(e.target.value)}
+                    required
+                  />
+                </div>
+                {error && (
+                  <Alert variant="destructive">
+                    <AlertDescription>{error}</AlertDescription>
+                  </Alert>
                 )}
-
-                <FormField
-                  control={form.control}
-                  name="email"
-                  rules={{ 
-                    required: "Email is required",
-                    pattern: {
-                      value: /^[A-Z0-9._%+-]+@[A-Z0-9.-]+\.[A-Z]{2,}$/i,
-                      message: "Invalid email address"
-                    }
-                  }}
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>Email</FormLabel>
-                      <FormControl>
-                        <Input type="email" placeholder="Enter your email" {...field} />
-                      </FormControl>
-                      <FormMessage />
-                    </FormItem>
+                <Button type="submit" className="w-full" disabled={isLoading}>
+                  {isLoading ? (
+                    <>
+                      <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                      Signing In...
+                    </>
+                  ) : (
+                    "Sign In"
                   )}
-                />
-
-                <FormField
-                  control={form.control}
-                  name="password"
-                  rules={{ 
-                    required: "Password is required",
-                    minLength: {
-                      value: 6,
-                      message: "Password must be at least 6 characters"
-                    }
-                  }}
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>Password</FormLabel>
-                      <FormControl>
-                        <div className="relative">
-                          <Input 
-                            type={showPassword ? "text" : "password"}
-                            placeholder="Enter your password" 
-                            {...field} 
-                          />
-                          <Button
-                            type="button"
-                            variant="ghost"
-                            size="sm"
-                            className="absolute right-2 top-1/2 -translate-y-1/2 h-6 w-6 p-0"
-                            onClick={() => setShowPassword(!showPassword)}
-                          >
-                            {showPassword ? (
-                              <EyeOff className="w-4 h-4" />
-                            ) : (
-                              <Eye className="w-4 h-4" />
-                            )}
-                          </Button>
-                        </div>
-                      </FormControl>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
-
-                <Button 
-                  type="submit" 
-                  className="w-full bg-gradient-primary text-white border-0"
-                  disabled={loading}
-                >
-                  {loading ? "Please wait..." : (isSignUp ? "Create Account" : "Sign In")}
                 </Button>
               </form>
-            </Form>
+            </TabsContent>
+            
+            <TabsContent value="signup">
+              <form onSubmit={handleSignUp} className="space-y-4">
+                <div className="space-y-2">
+                  <Label htmlFor="fullName">Full Name</Label>
+                  <Input
+                    id="fullName"
+                    type="text"
+                    value={fullName}
+                    onChange={(e) => setFullName(e.target.value)}
+                    required
+                  />
+                </div>
+                <div className="space-y-2">
+                  <Label htmlFor="signupEmail">Email</Label>
+                  <Input
+                    id="signupEmail"
+                    type="email"
+                    value={email}
+                    onChange={(e) => setEmail(e.target.value)}
+                    required
+                  />
+                </div>
+                <div className="space-y-2">
+                  <Label htmlFor="signupPassword">Password</Label>
+                  <Input
+                    id="signupPassword"
+                    type="password"
+                    value={password}
+                    onChange={(e) => setPassword(e.target.value)}
+                    required
+                  />
+                </div>
+                
+                <div className="space-y-3">
+                  <Label>I want to:</Label>
+                  <RadioGroup value={selectedRole} onValueChange={(value: "user" | "vendor") => setSelectedRole(value)}>
+                    <div className="flex items-center space-x-2 p-3 border rounded-lg hover:bg-muted/50 transition-colors">
+                      <RadioGroupItem value="user" id="user" />
+                      <Label htmlFor="user" className="flex items-center gap-2 cursor-pointer flex-1">
+                        <User className="w-4 h-4" />
+                        <div>
+                          <div className="font-medium">Browse and review businesses</div>
+                          <div className="text-sm text-muted-foreground">Find and rate local services</div>
+                        </div>
+                      </Label>
+                    </div>
+                    <div className="flex items-center space-x-2 p-3 border rounded-lg hover:bg-muted/50 transition-colors">
+                      <RadioGroupItem value="vendor" id="vendor" />
+                      <Label htmlFor="vendor" className="flex items-center gap-2 cursor-pointer flex-1">
+                        <Building2 className="w-4 h-4" />
+                        <div>
+                          <div className="font-medium">List my business</div>
+                          <div className="text-sm text-muted-foreground">Get discovered by customers</div>
+                        </div>
+                      </Label>
+                    </div>
+                  </RadioGroup>
+                </div>
 
-            <div className="mt-6 text-center">
-              <Button
-                variant="link"
-                onClick={() => {
-                  setIsSignUp(!isSignUp);
-                  form.reset();
-                }}
-                className="text-sm"
-              >
-                {isSignUp 
-                  ? "Already have an account? Sign in" 
-                  : "Don't have an account? Sign up"
-                }
-              </Button>
-            </div>
-          </CardContent>
-        </Card>
-      </div>
+                {error && (
+                  <Alert variant="destructive">
+                    <AlertDescription>{error}</AlertDescription>
+                  </Alert>
+                )}
+                <Button type="submit" className="w-full" disabled={isLoading}>
+                  {isLoading ? (
+                    <>
+                      <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                      Creating Account...
+                    </>
+                  ) : (
+                    "Create Account"
+                  )}
+                </Button>
+              </form>
+            </TabsContent>
+          </Tabs>
+        </CardContent>
+      </Card>
     </div>
   );
 };
