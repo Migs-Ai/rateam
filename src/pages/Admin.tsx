@@ -5,15 +5,18 @@ import { useAuth } from "@/hooks/useAuth";
 import { Navigate } from "react-router-dom";
 
 const Admin = () => {
-  const { user } = useAuth();
-  const { isAdmin, loading, role } = useUserRole();
+  const { user, loading: authLoading } = useAuth();
+  const { isAdmin, loading: roleLoading, role } = useUserRole();
 
   console.log('Admin page - User:', user?.email);
   console.log('Admin page - Role:', role);
   console.log('Admin page - IsAdmin:', isAdmin);
-  console.log('Admin page - Loading:', loading);
+  console.log('Admin page - Auth Loading:', authLoading);
+  console.log('Admin page - Role Loading:', roleLoading);
 
-  if (loading) {
+  const isLoading = authLoading || roleLoading;
+
+  if (isLoading) {
     return (
       <div className="min-h-screen bg-background flex items-center justify-center">
         <div className="text-center">
@@ -30,7 +33,7 @@ const Admin = () => {
   }
 
   if (!isAdmin) {
-    console.log('User is not admin, redirecting home');
+    console.log('User is not admin, showing access denied');
     return (
       <div className="min-h-screen bg-background flex items-center justify-center">
         <div className="text-center">
