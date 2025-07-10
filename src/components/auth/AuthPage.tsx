@@ -1,4 +1,3 @@
-
 import { useState } from "react";
 import { useAuth } from "@/hooks/useAuth";
 import { Button } from "@/components/ui/button";
@@ -8,7 +7,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Label } from "@/components/ui/label";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { Alert, AlertDescription } from "@/components/ui/alert";
-import { Loader2, Building2, User } from "lucide-react";
+import { Loader2, Building2, User, CheckCircle, Mail } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 
 const AuthPage = () => {
@@ -19,6 +18,7 @@ const AuthPage = () => {
   const [selectedRole, setSelectedRole] = useState<"user" | "vendor">("user");
   const [error, setError] = useState("");
   const [isLoading, setIsLoading] = useState(false);
+  const [showEmailConfirmation, setShowEmailConfirmation] = useState(false);
 
   const handleSignIn = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -44,6 +44,9 @@ const AuthPage = () => {
     if (error) {
       setError(error.message);
     } else {
+      // Show email confirmation message
+      setShowEmailConfirmation(true);
+      
       // After successful signup, assign the selected role
       const { data: { user } } = await supabase.auth.getUser();
       if (user) {
@@ -70,6 +73,37 @@ const AuthPage = () => {
           <Loader2 className="w-8 h-8 animate-spin mx-auto mb-4" />
           <p className="text-muted-foreground">Loading...</p>
         </div>
+      </div>
+    );
+  }
+
+  if (showEmailConfirmation) {
+    return (
+      <div className="min-h-screen bg-background flex items-center justify-center p-4">
+        <Card className="w-full max-w-md">
+          <CardHeader className="text-center">
+            <div className="mx-auto mb-4 flex h-16 w-16 items-center justify-center rounded-full bg-green-100">
+              <CheckCircle className="h-8 w-8 text-green-600" />
+            </div>
+            <CardTitle className="text-2xl font-bold">Check Your Email</CardTitle>
+            <CardDescription>
+              We've sent a confirmation link to {email}
+            </CardDescription>
+          </CardHeader>
+          <CardContent className="text-center space-y-4">
+            <div className="flex items-center justify-center gap-2 text-sm text-muted-foreground">
+              <Mail className="h-4 w-4" />
+              <span>Click the link in your email to complete your registration</span>
+            </div>
+            <Button 
+              variant="outline" 
+              onClick={() => setShowEmailConfirmation(false)}
+              className="w-full"
+            >
+              Back to Sign In
+            </Button>
+          </CardContent>
+        </Card>
       </div>
     );
   }

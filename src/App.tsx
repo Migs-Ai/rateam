@@ -10,6 +10,8 @@ import Auth from "./pages/Auth";
 import Admin from "./pages/Admin";
 import About from "./pages/About";
 import Polls from "./pages/Polls";
+import VendorOnboarding from "./pages/VendorOnboarding";
+import VendorDashboard from "./pages/VendorDashboard";
 import NotFound from "./pages/NotFound";
 import ProtectedRoute from "./components/auth/ProtectedRoute";
 
@@ -35,6 +37,8 @@ const App = () => (
             <Route path="/admin" element={<Admin />} />
             <Route path="/about" element={<About />} />
             <Route path="/polls" element={<Polls />} />
+            <Route path="/vendor-onboarding" element={<VendorOnboarding />} />
+            <Route path="/vendor-dashboard" element={<VendorDashboard />} />
             {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
             <Route path="*" element={<NotFound />} />
           </Routes>
