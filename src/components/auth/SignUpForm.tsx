@@ -8,6 +8,7 @@ import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Loader2, Building2, User } from "lucide-react";
 import { useAuth } from "@/hooks/useAuth";
 import { supabase } from "@/integrations/supabase/client";
+import { useNavigate } from "react-router-dom";
 
 interface SignUpFormProps {
   email: string;
@@ -33,6 +34,7 @@ export const SignUpForm = ({
   onEmailConfirmation 
 }: SignUpFormProps) => {
   const { signUp } = useAuth();
+  const navigate = useNavigate();
   const [error, setError] = useState("");
   const [isLoading, setIsLoading] = useState(false);
 
@@ -41,31 +43,41 @@ export const SignUpForm = ({
     setError("");
     setIsLoading(true);
 
-    const { error } = await signUp(email, password, fullName);
-    
-    if (error) {
-      setError(error.message);
-    } else {
-      // Show email confirmation message
-      onEmailConfirmation();
+    try {
+      const { error } = await signUp(email, password, fullName);
       
-      // After successful signup, assign the selected role
-      const { data: { user } } = await supabase.auth.getUser();
-      if (user) {
-        const { error: roleError } = await supabase
-          .from('user_roles')
-          .insert({
-            user_id: user.id,
-            role: selectedRole
-          });
+      if (error) {
+        setError(error.message);
+      } else {
+        // Show email confirmation message
+        onEmailConfirmation();
         
-        if (roleError) {
-          console.error('Error assigning role:', roleError);
+        // After successful signup, assign the selected role
+        const { data: { user } } = await supabase.auth.getUser();
+        if (user) {
+          const { error: roleError } = await supabase
+            .from('user_roles')
+            .insert({
+              user_id: user.id,
+              role: selectedRole
+            });
+          
+          if (roleError) {
+            console.error('Error assigning role:', roleError);
+          }
+
+          // If vendor role selected, redirect to onboarding after email confirmation
+          if (selectedRole === 'vendor') {
+            // Store vendor onboarding flag in localStorage for after email confirmation
+            localStorage.setItem('pendingVendorOnboarding', 'true');
+          }
         }
       }
+    } catch (error: any) {
+      setError(error.message);
+    } finally {
+      setIsLoading(false);
     }
-    
-    setIsLoading(false);
   };
 
   return (
@@ -98,6 +110,7 @@ export const SignUpForm = ({
           value={password}
           onChange={(e) => setPassword(e.target.value)}
           required
+          minLength={6}
         />
       </div>
       
@@ -120,12 +133,26 @@ export const SignUpForm = ({
               <Building2 className="w-4 h-4" />
               <div>
                 <div className="font-medium">List my business</div>
-                <div className="text-sm text-muted-foreground">Get discovered by customers</div>
+                <div className="text-sm text-muted-foreground">Get discovered by customers and receive reviews</div>
               </div>
             </Label>
           </div>
         </RadioGroup>
       </div>
+
+      {selectedRole === 'vendor' && (
+        <div className="bg-blue-50 p-3 rounded-lg border border-blue-200">
+          <div className="text-sm text-blue-800">
+            <strong>What happens next:</strong>
+            <ul className="mt-1 space-y-1 text-xs">
+              <li>• You'll receive an email confirmation</li>
+              <li>• After confirming, you'll be guided through business setup</li>
+              <li>• Add your business details, contact info, and category</li>
+              <li>• Your business will be reviewed before going live</li>
+            </ul>
+          </div>
+        </div>
+      )}
 
       {error && (
         <Alert variant="destructive">
@@ -139,7 +166,7 @@ export const SignUpForm = ({
             Creating Account...
           </>
         ) : (
-          "Create Account"
+          selectedRole === 'vendor' ? "Create Business Account" : "Create Account"
         )}
       </Button>
     </form>

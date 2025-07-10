@@ -2,6 +2,7 @@
 import { useState, useEffect, createContext, useContext } from 'react';
 import { User, Session } from '@supabase/supabase-js';
 import { supabase } from '@/integrations/supabase/client';
+import { useNavigate } from 'react-router-dom';
 
 interface AuthContextType {
   user: User | null;
@@ -27,6 +28,15 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
       setSession(session);
       setUser(session?.user ?? null);
       setLoading(false);
+
+      // Check for pending vendor onboarding
+      if (session?.user && localStorage.getItem('pendingVendorOnboarding')) {
+        localStorage.removeItem('pendingVendorOnboarding');
+        // Small delay to ensure UI is ready
+        setTimeout(() => {
+          window.location.href = '/vendor-onboarding';
+        }, 1000);
+      }
     };
 
     getSession();
@@ -38,6 +48,15 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
         setSession(session);
         setUser(session?.user ?? null);
         setLoading(false);
+
+        // Handle vendor onboarding after email confirmation
+        if (event === 'SIGNED_IN' && session?.user && localStorage.getItem('pendingVendorOnboarding')) {
+          localStorage.removeItem('pendingVendorOnboarding');
+          // Small delay to ensure UI is ready
+          setTimeout(() => {
+            window.location.href = '/vendor-onboarding';
+          }, 1000);
+        }
       }
     );
 
