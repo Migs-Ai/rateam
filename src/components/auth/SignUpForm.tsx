@@ -1,10 +1,9 @@
-
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Alert, AlertDescription } from "@/components/ui/alert";
-import { Loader2 } from "lucide-react";
+import { Loader2, Eye, EyeOff } from "lucide-react";
 import { useAuth } from "@/hooks/useAuth";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
@@ -38,6 +37,7 @@ export const SignUpForm = ({
   const { signUp } = useAuth();
   const [error, setError] = useState("");
   const [isLoading, setIsLoading] = useState(false);
+  const [showPassword, setShowPassword] = useState(false);
   
   // Vendor-specific fields
   const [businessName, setBusinessName] = useState("");
@@ -47,6 +47,7 @@ export const SignUpForm = ({
   const [phone, setPhone] = useState("");
   const [vendorEmail, setVendorEmail] = useState("");
   const [whatsapp, setWhatsapp] = useState("");
+  const [preferredContact, setPreferredContact] = useState("whatsapp");
 
   // Fetch categories for vendor signup
   const { data: categories } = useQuery({
@@ -124,6 +125,7 @@ export const SignUpForm = ({
             phone: phone,
             email: vendorEmail || email,
             whatsapp: whatsapp,
+            preferred_contact: preferredContact,
             status: 'pending'
           });
 
@@ -170,13 +172,32 @@ export const SignUpForm = ({
       
       <div className="space-y-2">
         <Label htmlFor="password">Password</Label>
-        <Input
-          id="password"
-          type="password"
-          value={password}
-          onChange={(e) => setPassword(e.target.value)}
-          required
-        />
+        <div className="relative">
+          <Input
+            id="password"
+            type={showPassword ? "text" : "password"}
+            value={password}
+            onChange={(e) => setPassword(e.target.value)}
+            required
+            className="pr-10"
+          />
+          <Button
+            type="button"
+            variant="ghost"
+            size="sm"
+            className="absolute right-0 top-0 h-full px-3 py-2 hover:bg-transparent"
+            onClick={() => setShowPassword(!showPassword)}
+          >
+            {showPassword ? (
+              <EyeOff className="h-4 w-4" />
+            ) : (
+              <Eye className="h-4 w-4" />
+            )}
+            <span className="sr-only">
+              {showPassword ? "Hide password" : "Show password"}
+            </span>
+          </Button>
+        </div>
       </div>
 
       <div className="space-y-3">
@@ -269,6 +290,20 @@ export const SignUpForm = ({
                 placeholder="Optional"
               />
             </div>
+          </div>
+
+          <div className="space-y-2">
+            <Label htmlFor="preferredContact">Preferred Contact Method *</Label>
+            <Select value={preferredContact} onValueChange={setPreferredContact}>
+              <SelectTrigger>
+                <SelectValue placeholder="Select preferred contact method" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="phone">Phone</SelectItem>
+                <SelectItem value="whatsapp">WhatsApp</SelectItem>
+                <SelectItem value="email">Email</SelectItem>
+              </SelectContent>
+            </Select>
           </div>
           
           <div className="space-y-2">
