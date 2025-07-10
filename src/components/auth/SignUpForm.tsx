@@ -100,8 +100,8 @@ export const SignUpForm = ({
       if (selectedRole === "vendor") {
         console.log('Creating vendor profile...');
         
-        // Wait a moment for the user to be created
-        await new Promise(resolve => setTimeout(resolve, 1000));
+        // Wait a moment for the user to be created and trigger to run
+        await new Promise(resolve => setTimeout(resolve, 2000));
         
         // Get the current user after signup
         const { data: { user }, error: userError } = await supabase.auth.getUser();
@@ -114,13 +114,17 @@ export const SignUpForm = ({
             variant: "destructive"
           });
         } else {
-          console.log('Creating vendor role and vendor record for user:', user.id);
+          console.log('Updating user role to vendor for user:', user.id);
           
-          // Update user role to vendor (not admin)
+          // Update user role to vendor - use upsert to handle both insert and update cases
           const { error: roleError } = await supabase
             .from('user_roles')
-            .update({ role: 'vendor' })
-            .eq('user_id', user.id);
+            .upsert({ 
+              user_id: user.id, 
+              role: 'vendor' 
+            }, {
+              onConflict: 'user_id'
+            });
 
           if (roleError) {
             console.error('Error updating user role:', roleError);
