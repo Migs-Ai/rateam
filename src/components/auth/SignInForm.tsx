@@ -27,35 +27,46 @@ export const SignInForm = ({ email, setEmail, password, setPassword }: SignInFor
     setError("");
     setIsLoading(true);
 
-    const { error } = await signIn(email, password);
-    
-    if (error) {
-      setError(error.message);
-      setIsLoading(false);
-      return;
-    }
-
-    // Check user role after successful login
     try {
+      const { error } = await signIn(email, password);
+      
+      if (error) {
+        setError(error.message);
+        setIsLoading(false);
+        return;
+      }
+
+      // Wait a moment for auth state to update
+      await new Promise(resolve => setTimeout(resolve, 500));
+
+      // Check user role after successful login
       const { data: { user } } = await supabase.auth.getUser();
       if (user) {
-        const { data: roleData } = await supabase
+        console.log('User logged in:', user.id);
+        
+        const { data: roleData, error: roleError } = await supabase
           .from('user_roles')
           .select('role')
           .eq('user_id', user.id)
           .single();
 
+        console.log('User role data:', roleData, 'Error:', roleError);
+
         // Redirect based on user role
         if (roleData?.role === 'vendor') {
+          console.log('Redirecting to vendor dashboard');
           navigate('/vendor-dashboard');
         } else if (roleData?.role === 'admin' || roleData?.role === 'super_admin') {
+          console.log('Redirecting to admin dashboard');
           navigate('/admin');
         } else {
+          console.log('Redirecting to home page');
           navigate('/');
         }
       }
     } catch (error) {
-      console.error('Error checking user role:', error);
+      console.error('Error during sign in:', error);
+      setError('An unexpected error occurred');
       navigate('/');
     }
     

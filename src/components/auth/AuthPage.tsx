@@ -7,6 +7,7 @@ import { Loader2 } from "lucide-react";
 import { SignInForm } from "./SignInForm";
 import { SignUpForm } from "./SignUpForm";
 import { EmailConfirmation } from "./EmailConfirmation";
+import { RegistrationSuccess } from "./RegistrationSuccess";
 
 const AuthPage = () => {
   const { loading } = useAuth();
@@ -15,6 +16,8 @@ const AuthPage = () => {
   const [fullName, setFullName] = useState("");
   const [selectedRole, setSelectedRole] = useState<"user" | "vendor">("user");
   const [showEmailConfirmation, setShowEmailConfirmation] = useState(false);
+  const [showRegistrationSuccess, setShowRegistrationSuccess] = useState(false);
+  const [registrationData, setRegistrationData] = useState({ email: "", isVendor: false });
 
   if (loading) {
     return (
@@ -27,14 +30,32 @@ const AuthPage = () => {
     );
   }
 
+  if (showRegistrationSuccess) {
+    return (
+      <RegistrationSuccess 
+        email={registrationData.email}
+        isVendor={registrationData.isVendor}
+        onContinue={() => setShowEmailConfirmation(true)}
+      />
+    );
+  }
+
   if (showEmailConfirmation) {
     return (
       <EmailConfirmation 
         email={email}
-        onBackToSignIn={() => setShowEmailConfirmation(false)}
+        onBackToSignIn={() => {
+          setShowEmailConfirmation(false);
+          setShowRegistrationSuccess(false);
+        }}
       />
     );
   }
+
+  const handleRegistrationSuccess = (email: string, isVendor: boolean) => {
+    setRegistrationData({ email, isVendor });
+    setShowRegistrationSuccess(true);
+  };
 
   return (
     <div className="min-h-screen bg-background flex items-center justify-center p-4">
@@ -72,6 +93,7 @@ const AuthPage = () => {
                 selectedRole={selectedRole}
                 setSelectedRole={setSelectedRole}
                 onEmailConfirmation={() => setShowEmailConfirmation(true)}
+                onRegistrationSuccess={handleRegistrationSuccess}
               />
             </TabsContent>
           </Tabs>

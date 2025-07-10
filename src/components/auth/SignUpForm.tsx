@@ -1,3 +1,4 @@
+
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -10,6 +11,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Textarea } from "@/components/ui/textarea";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
+import { useToast } from "@/hooks/use-toast";
 
 interface SignUpFormProps {
   email: string;
@@ -21,6 +23,7 @@ interface SignUpFormProps {
   selectedRole: "user" | "vendor";
   setSelectedRole: (role: "user" | "vendor") => void;
   onEmailConfirmation: () => void;
+  onRegistrationSuccess: (email: string, isVendor: boolean) => void;
 }
 
 export const SignUpForm = ({ 
@@ -32,9 +35,11 @@ export const SignUpForm = ({
   setFullName,
   selectedRole,
   setSelectedRole,
-  onEmailConfirmation 
+  onEmailConfirmation,
+  onRegistrationSuccess
 }: SignUpFormProps) => {
   const { signUp } = useAuth();
+  const { toast } = useToast();
   const [error, setError] = useState("");
   const [isLoading, setIsLoading] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
@@ -78,66 +83,84 @@ export const SignUpForm = ({
     }
 
     try {
+      console.log('Starting signup process for:', email, 'as', selectedRole);
+      
       // First, sign up the user
       const { error: signUpError } = await signUp(email, password, fullName);
       
       if (signUpError) {
+        console.error('Signup error:', signUpError);
         setError(signUpError.message);
         setIsLoading(false);
         return;
       }
 
-      // Get the current user after signup
-      const { data: { user }, error: userError } = await supabase.auth.getUser();
-      
-      if (userError || !user) {
-        console.error('Error getting user after signup:', userError);
-        setIsLoading(false);
-        return;
-      }
+      console.log('User signed up successfully');
 
-      // If vendor role is selected, create vendor role and vendor record
+      // If vendor role is selected, wait a bit and then create vendor record
       if (selectedRole === "vendor") {
-        console.log('Creating vendor role and vendor record for user:', user.id);
+        console.log('Creating vendor profile...');
         
-        // Update user role to vendor
-        const { error: roleError } = await supabase
-          .from('user_roles')
-          .update({ role: 'vendor' })
-          .eq('user_id', user.id);
-
-        if (roleError) {
-          console.error('Error updating user role:', roleError);
-          setError('Failed to assign vendor role');
-          setIsLoading(false);
-          return;
-        }
-
-        // Create vendor record
-        const { error: vendorError } = await supabase
-          .from('vendors')
-          .insert({
-            user_id: user.id,
-            business_name: businessName,
-            category: category,
-            location: location,
-            description: description,
-            phone: phone,
-            email: vendorEmail || email,
-            whatsapp: whatsapp,
-            preferred_contact: preferredContact,
-            status: 'pending'
+        // Wait a moment for the user to be created
+        await new Promise(resolve => setTimeout(resolve, 1000));
+        
+        // Get the current user after signup
+        const { data: { user }, error: userError } = await supabase.auth.getUser();
+        
+        if (userError || !user) {
+          console.error('Error getting user after signup:', userError);
+          toast({
+            title: "Warning",
+            description: "Account created but vendor profile setup incomplete. You can complete it later.",
+            variant: "destructive"
           });
+        } else {
+          console.log('Creating vendor role and vendor record for user:', user.id);
+          
+          // Update user role to vendor
+          const { error: roleError } = await supabase
+            .from('user_roles')
+            .update({ role: 'vendor' })
+            .eq('user_id', user.id);
 
-        if (vendorError) {
-          console.error('Error creating vendor record:', vendorError);
-          setError('Failed to create vendor profile');
-          setIsLoading(false);
-          return;
+          if (roleError) {
+            console.error('Error updating user role:', roleError);
+          } else {
+            console.log('User role updated to vendor');
+          }
+
+          // Create vendor record
+          const { error: vendorError } = await supabase
+            .from('vendors')
+            .insert({
+              user_id: user.id,
+              business_name: businessName,
+              category: category,
+              location: location,
+              description: description,
+              phone: phone,
+              email: vendorEmail || email,
+              whatsapp: whatsapp,
+              preferred_contact: preferredContact,
+              status: 'pending'
+            });
+
+          if (vendorError) {
+            console.error('Error creating vendor record:', vendorError);
+            toast({
+              title: "Warning", 
+              description: "Account created but vendor profile setup incomplete. You can complete it later.",
+              variant: "destructive"
+            });
+          } else {
+            console.log('Vendor record created successfully');
+          }
         }
       }
 
-      onEmailConfirmation();
+      // Show registration success animation
+      onRegistrationSuccess(email, selectedRole === "vendor");
+      
     } catch (error) {
       console.error('Signup error:', error);
       setError('An unexpected error occurred');
