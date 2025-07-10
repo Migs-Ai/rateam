@@ -3,14 +3,14 @@ import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Textarea } from "@/components/ui/textarea";
+import { Alert, AlertDescription } from "@/components/ui/alert";
+import { Loader2 } from "lucide-react";
+import { useAuth } from "@/hooks/useAuth";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Alert, AlertDescription } from "@/components/ui/alert";
-import { Loader2, Building2, User } from "lucide-react";
-import { useAuth } from "@/hooks/useAuth";
+import { Textarea } from "@/components/ui/textarea";
+import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
-import { useCategories } from "@/hooks/useCategories";
 
 interface SignUpFormProps {
   email: string;
@@ -30,111 +30,118 @@ export const SignUpForm = ({
   password, 
   setPassword, 
   fullName, 
-  setFullName, 
-  selectedRole, 
-  setSelectedRole, 
+  setFullName,
+  selectedRole,
+  setSelectedRole,
   onEmailConfirmation 
 }: SignUpFormProps) => {
   const { signUp } = useAuth();
-  const { data: categories, isLoading: categoriesLoading } = useCategories();
   const [error, setError] = useState("");
   const [isLoading, setIsLoading] = useState(false);
+  
+  // Vendor-specific fields
+  const [businessName, setBusinessName] = useState("");
+  const [category, setCategory] = useState("");
+  const [location, setLocation] = useState("");
+  const [description, setDescription] = useState("");
+  const [phone, setPhone] = useState("");
+  const [vendorEmail, setVendorEmail] = useState("");
+  const [whatsapp, setWhatsapp] = useState("");
 
-  // Vendor-specific form fields
-  const [vendorData, setVendorData] = useState({
-    businessName: "",
-    description: "",
-    category: "",
-    location: "",
-    phone: "",
-    whatsapp: "",
-    businessEmail: "",
-    preferredContact: "whatsapp"
-  });
-
-  const handleVendorDataChange = (field: string, value: string) => {
-    setVendorData(prev => ({ ...prev, [field]: value }));
-  };
-
-  const validateForm = () => {
-    if (selectedRole === "vendor") {
-      if (!vendorData.businessName.trim()) {
-        setError("Business name is required for vendors");
-        return false;
-      }
-      if (!vendorData.category) {
-        setError("Please select a business category");
-        return false;
-      }
-      if (!vendorData.location.trim()) {
-        setError("Business location is required");
-        return false;
-      }
+  // Fetch categories for vendor signup
+  const { data: categories } = useQuery({
+    queryKey: ['categories'],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from('categories')
+        .select('*')
+        .order('name');
+      
+      if (error) throw error;
+      return data;
     }
-    return true;
-  };
+  });
 
   const handleSignUp = async (e: React.FormEvent) => {
     e.preventDefault();
     setError("");
-
-    if (!validateForm()) {
-      return;
-    }
-
     setIsLoading(true);
 
-    try {
-      const { error } = await signUp(email, password, fullName);
-      
-      if (error) {
-        setError(error.message);
-      } else {
-        // Show email confirmation message
-        onEmailConfirmation();
-        
-        // After successful signup, assign the selected role
-        const { data: { user } } = await supabase.auth.getUser();
-        if (user) {
-          const { error: roleError } = await supabase
-            .from('user_roles')
-            .insert({
-              user_id: user.id,
-              role: selectedRole
-            });
-          
-          if (roleError) {
-            console.error('Error assigning role:', roleError);
-          }
+    // Validate vendor-specific fields if vendor is selected
+    if (selectedRole === "vendor") {
+      if (!businessName || !category || !location || !phone) {
+        setError("Please fill in all required vendor fields");
+        setIsLoading(false);
+        return;
+      }
+    }
 
-          // If vendor role selected, also create vendor profile
-          if (selectedRole === 'vendor') {
-            const { error: vendorError } = await supabase
-              .from('vendors')
-              .insert({
-                user_id: user.id,
-                business_name: vendorData.businessName,
-                description: vendorData.description,
-                category: vendorData.category,
-                location: vendorData.location,
-                phone: vendorData.phone,
-                whatsapp: vendorData.whatsapp,
-                email: vendorData.businessEmail || email,
-                preferred_contact: vendorData.preferredContact,
-                status: 'pending'
-              });
-            
-            if (vendorError) {
-              console.error('Error creating vendor profile:', vendorError);
-            }
-          }
+    try {
+      // First, sign up the user
+      const { error: signUpError } = await signUp(email, password, fullName);
+      
+      if (signUpError) {
+        setError(signUpError.message);
+        setIsLoading(false);
+        return;
+      }
+
+      // Get the current user after signup
+      const { data: { user }, error: userError } = await supabase.auth.getUser();
+      
+      if (userError || !user) {
+        console.error('Error getting user after signup:', userError);
+        setIsLoading(false);
+        return;
+      }
+
+      // If vendor role is selected, create vendor role and vendor record
+      if (selectedRole === "vendor") {
+        console.log('Creating vendor role and vendor record for user:', user.id);
+        
+        // Update user role to vendor
+        const { error: roleError } = await supabase
+          .from('user_roles')
+          .update({ role: 'vendor' })
+          .eq('user_id', user.id);
+
+        if (roleError) {
+          console.error('Error updating user role:', roleError);
+          setError('Failed to assign vendor role');
+          setIsLoading(false);
+          return;
+        }
+
+        // Create vendor record
+        const { error: vendorError } = await supabase
+          .from('vendors')
+          .insert({
+            user_id: user.id,
+            business_name: businessName,
+            category: category,
+            location: location,
+            description: description,
+            phone: phone,
+            email: vendorEmail || email,
+            whatsapp: whatsapp,
+            status: 'pending'
+          });
+
+        if (vendorError) {
+          console.error('Error creating vendor record:', vendorError);
+          setError('Failed to create vendor profile');
+          setIsLoading(false);
+          return;
         }
       }
-    } catch (error: any) {
-      setError(error.message);
-    } finally {
-      setIsLoading(false);
+
+      onEmailConfirmation();
+    } catch (error) {
+      console.error('Signup error:', error);
+      setError('An unexpected error occurred');
     }
+    
+    setIsLoading(false);
   };
 
   return (
@@ -151,9 +158,9 @@ export const SignUpForm = ({
       </div>
       
       <div className="space-y-2">
-        <Label htmlFor="signupEmail">Email</Label>
+        <Label htmlFor="email">Email</Label>
         <Input
-          id="signupEmail"
+          id="email"
           type="email"
           value={email}
           onChange={(e) => setEmail(e.target.value)}
@@ -162,165 +169,117 @@ export const SignUpForm = ({
       </div>
       
       <div className="space-y-2">
-        <Label htmlFor="signupPassword">Password</Label>
+        <Label htmlFor="password">Password</Label>
         <Input
-          id="signupPassword"
+          id="password"
           type="password"
           value={password}
           onChange={(e) => setPassword(e.target.value)}
           required
-          minLength={6}
         />
       </div>
-      
+
       <div className="space-y-3">
-        <Label>I want to:</Label>
-        <RadioGroup value={selectedRole} onValueChange={(value: "user" | "vendor") => setSelectedRole(value)}>
-          <div className="flex items-center space-x-2 p-3 border rounded-lg hover:bg-muted/50 transition-colors">
+        <Label>Account Type</Label>
+        <RadioGroup value={selectedRole} onValueChange={setSelectedRole} className="flex gap-6">
+          <div className="flex items-center space-x-2">
             <RadioGroupItem value="user" id="user" />
-            <Label htmlFor="user" className="flex items-center gap-2 cursor-pointer flex-1">
-              <User className="w-4 h-4" />
-              <div>
-                <div className="font-medium">Browse and review businesses</div>
-                <div className="text-sm text-muted-foreground">Find and rate local services</div>
-              </div>
-            </Label>
+            <Label htmlFor="user">Regular User</Label>
           </div>
-          <div className="flex items-center space-x-2 p-3 border rounded-lg hover:bg-muted/50 transition-colors">
+          <div className="flex items-center space-x-2">
             <RadioGroupItem value="vendor" id="vendor" />
-            <Label htmlFor="vendor" className="flex items-center gap-2 cursor-pointer flex-1">
-              <Building2 className="w-4 h-4" />
-              <div>
-                <div className="font-medium">List my business</div>
-                <div className="text-sm text-muted-foreground">Get discovered by customers and receive reviews</div>
-              </div>
-            </Label>
+            <Label htmlFor="vendor">Business/Vendor</Label>
           </div>
         </RadioGroup>
       </div>
 
-      {/* Vendor-specific fields */}
-      {selectedRole === 'vendor' && (
-        <div className="space-y-4 p-4 bg-blue-50 rounded-lg border border-blue-200">
-          <h3 className="font-semibold text-blue-900 mb-3">Business Information</h3>
+      {selectedRole === "vendor" && (
+        <div className="space-y-4 p-4 border rounded-lg bg-gray-50">
+          <h3 className="font-semibold text-lg">Business Information</h3>
           
-          <div className="space-y-2">
-            <Label htmlFor="businessName">Business Name *</Label>
-            <Input
-              id="businessName"
-              type="text"
-              value={vendorData.businessName}
-              onChange={(e) => handleVendorDataChange("businessName", e.target.value)}
-              placeholder="Enter your business name"
-              required
-            />
-          </div>
-
-          <div className="space-y-2">
-            <Label htmlFor="businessCategory">Business Category *</Label>
-            <Select value={vendorData.category} onValueChange={(value) => handleVendorDataChange("category", value)}>
-              <SelectTrigger>
-                <SelectValue placeholder="Select your business category" />
-              </SelectTrigger>
-              <SelectContent>
-                {categories?.map((category) => (
-                  <SelectItem key={category.id} value={category.name}>
-                    {category.name}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-          </div>
-
-          <div className="space-y-2">
-            <Label htmlFor="businessLocation">Business Location *</Label>
-            <Input
-              id="businessLocation"
-              type="text"
-              value={vendorData.location}
-              onChange={(e) => handleVendorDataChange("location", e.target.value)}
-              placeholder="City, State or Full Address"
-              required
-            />
-          </div>
-
-          <div className="space-y-2">
-            <Label htmlFor="businessDescription">Business Description</Label>
-            <Textarea
-              id="businessDescription"
-              value={vendorData.description}
-              onChange={(e) => handleVendorDataChange("description", e.target.value)}
-              placeholder="Describe your business, services, and specialties..."
-              rows={3}
-            />
-          </div>
-
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <div className="space-y-2">
-              <Label htmlFor="businessPhone">Phone Number</Label>
+              <Label htmlFor="businessName">Business Name *</Label>
               <Input
-                id="businessPhone"
-                type="tel"
-                value={vendorData.phone}
-                onChange={(e) => handleVendorDataChange("phone", e.target.value)}
-                placeholder="+1 (555) 123-4567"
+                id="businessName"
+                type="text"
+                value={businessName}
+                onChange={(e) => setBusinessName(e.target.value)}
+                required
               />
             </div>
             
             <div className="space-y-2">
-              <Label htmlFor="businessWhatsapp">WhatsApp Number</Label>
+              <Label htmlFor="category">Category *</Label>
+              <Select value={category} onValueChange={setCategory}>
+                <SelectTrigger>
+                  <SelectValue placeholder="Select a category" />
+                </SelectTrigger>
+                <SelectContent>
+                  {categories?.map((cat) => (
+                    <SelectItem key={cat.id} value={cat.name}>
+                      {cat.name}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+            
+            <div className="space-y-2">
+              <Label htmlFor="location">Location *</Label>
               <Input
-                id="businessWhatsapp"
+                id="location"
+                type="text"
+                value={location}
+                onChange={(e) => setLocation(e.target.value)}
+                placeholder="City, State"
+                required
+              />
+            </div>
+            
+            <div className="space-y-2">
+              <Label htmlFor="phone">Phone Number *</Label>
+              <Input
+                id="phone"
                 type="tel"
-                value={vendorData.whatsapp}
-                onChange={(e) => handleVendorDataChange("whatsapp", e.target.value)}
-                placeholder="+1 (555) 123-4567"
+                value={phone}
+                onChange={(e) => setPhone(e.target.value)}
+                required
+              />
+            </div>
+            
+            <div className="space-y-2">
+              <Label htmlFor="vendorEmail">Business Email</Label>
+              <Input
+                id="vendorEmail"
+                type="email"
+                value={vendorEmail}
+                onChange={(e) => setVendorEmail(e.target.value)}
+                placeholder="Optional - defaults to account email"
+              />
+            </div>
+            
+            <div className="space-y-2">
+              <Label htmlFor="whatsapp">WhatsApp Number</Label>
+              <Input
+                id="whatsapp"
+                type="tel"
+                value={whatsapp}
+                onChange={(e) => setWhatsapp(e.target.value)}
+                placeholder="Optional"
               />
             </div>
           </div>
-
+          
           <div className="space-y-2">
-            <Label htmlFor="businessEmail">Business Email</Label>
-            <Input
-              id="businessEmail"
-              type="email"
-              value={vendorData.businessEmail}
-              onChange={(e) => handleVendorDataChange("businessEmail", e.target.value)}
-              placeholder="business@example.com (optional - will use signup email if empty)"
+            <Label htmlFor="description">Business Description</Label>
+            <Textarea
+              id="description"
+              value={description}
+              onChange={(e) => setDescription(e.target.value)}
+              placeholder="Tell us about your business..."
+              rows={3}
             />
-          </div>
-
-          <div className="space-y-3">
-            <Label>Preferred Contact Method</Label>
-            <RadioGroup 
-              value={vendorData.preferredContact} 
-              onValueChange={(value) => handleVendorDataChange("preferredContact", value)}
-            >
-              <div className="flex items-center space-x-2">
-                <RadioGroupItem value="whatsapp" id="whatsapp-contact" />
-                <Label htmlFor="whatsapp-contact">WhatsApp</Label>
-              </div>
-              <div className="flex items-center space-x-2">
-                <RadioGroupItem value="phone" id="phone-contact" />
-                <Label htmlFor="phone-contact">Phone Call</Label>
-              </div>
-              <div className="flex items-center space-x-2">
-                <RadioGroupItem value="email" id="email-contact" />
-                <Label htmlFor="email-contact">Email</Label>
-              </div>
-            </RadioGroup>
-          </div>
-
-          <div className="bg-green-50 p-3 rounded-lg border border-green-200">
-            <div className="text-sm text-green-800">
-              <strong>What happens next:</strong>
-              <ul className="mt-1 space-y-1 text-xs">
-                <li>• You'll receive an email confirmation</li>
-                <li>• Your business will be reviewed by our admin team</li>
-                <li>• Once approved, customers can find and review your business</li>
-                <li>• You'll get access to your vendor dashboard</li>
-              </ul>
-            </div>
           </div>
         </div>
       )}
@@ -331,14 +290,14 @@ export const SignUpForm = ({
         </Alert>
       )}
       
-      <Button type="submit" className="w-full" disabled={isLoading || categoriesLoading}>
+      <Button type="submit" className="w-full" disabled={isLoading}>
         {isLoading ? (
           <>
             <Loader2 className="w-4 h-4 mr-2 animate-spin" />
             Creating Account...
           </>
         ) : (
-          selectedRole === 'vendor' ? "Create Business Account" : "Create Account"
+          "Create Account"
         )}
       </Button>
     </form>
