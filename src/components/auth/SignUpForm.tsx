@@ -1,3 +1,4 @@
+
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -96,12 +97,12 @@ export const SignUpForm = ({
 
       console.log('User signed up successfully');
 
-      // If vendor role is selected, wait a bit and then create vendor record
+      // If vendor role is selected, update role and create vendor record
       if (selectedRole === "vendor") {
-        console.log('Creating vendor profile...');
+        console.log('Processing vendor registration...');
         
         // Wait longer for the user to be created and trigger to run
-        await new Promise(resolve => setTimeout(resolve, 3000));
+        await new Promise(resolve => setTimeout(resolve, 4000));
         
         // Get the current user after signup
         const { data: { user }, error: userError } = await supabase.auth.getUser();
@@ -114,13 +115,26 @@ export const SignUpForm = ({
             variant: "destructive"
           });
         } else {
-          console.log('Updating user role to vendor for user:', user.id);
+          console.log('Found user after signup:', user.id);
           
-          // Update the existing user role record to vendor
+          // Check current role first
+          const { data: currentRole, error: roleCheckError } = await supabase
+            .from('user_roles')
+            .select('role')
+            .eq('user_id', user.id)
+            .single();
+
+          console.log('Current user role:', currentRole, 'Error:', roleCheckError);
+
+          // Update the role to vendor using upsert to handle both cases
           const { error: roleError } = await supabase
             .from('user_roles')
-            .update({ role: 'vendor' })
-            .eq('user_id', user.id);
+            .upsert({ 
+              user_id: user.id, 
+              role: 'vendor' 
+            }, {
+              onConflict: 'user_id'
+            });
 
           if (roleError) {
             console.error('Error updating user role:', roleError);
@@ -131,6 +145,15 @@ export const SignUpForm = ({
             });
           } else {
             console.log('User role updated to vendor successfully');
+            
+            // Verify the role was updated
+            const { data: updatedRole, error: verifyError } = await supabase
+              .from('user_roles')
+              .select('role')
+              .eq('user_id', user.id)
+              .single();
+            
+            console.log('Verified updated role:', updatedRole, 'Error:', verifyError);
           }
 
           // Create vendor record
