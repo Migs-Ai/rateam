@@ -100,8 +100,8 @@ export const SignUpForm = ({
       if (selectedRole === "vendor") {
         console.log('Creating vendor profile...');
         
-        // Wait a moment for the user to be created and trigger to run
-        await new Promise(resolve => setTimeout(resolve, 2000));
+        // Wait longer for the user to be created and trigger to run
+        await new Promise(resolve => setTimeout(resolve, 3000));
         
         // Get the current user after signup
         const { data: { user }, error: userError } = await supabase.auth.getUser();
@@ -116,20 +116,21 @@ export const SignUpForm = ({
         } else {
           console.log('Updating user role to vendor for user:', user.id);
           
-          // Update user role to vendor - use upsert to handle both insert and update cases
+          // Update the existing user role record to vendor
           const { error: roleError } = await supabase
             .from('user_roles')
-            .upsert({ 
-              user_id: user.id, 
-              role: 'vendor' 
-            }, {
-              onConflict: 'user_id'
-            });
+            .update({ role: 'vendor' })
+            .eq('user_id', user.id);
 
           if (roleError) {
             console.error('Error updating user role:', roleError);
+            toast({
+              title: "Warning",
+              description: "Account created but role assignment failed. Contact support.",
+              variant: "destructive"
+            });
           } else {
-            console.log('User role updated to vendor');
+            console.log('User role updated to vendor successfully');
           }
 
           // Create vendor record
