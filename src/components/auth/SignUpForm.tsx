@@ -1,4 +1,3 @@
-
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -117,7 +116,7 @@ export const SignUpForm = ({
         } else {
           console.log('Creating vendor role and vendor record for user:', user.id);
           
-          // Update user role to vendor
+          // Update user role to vendor (not admin)
           const { error: roleError } = await supabase
             .from('user_roles')
             .update({ role: 'vendor' })
