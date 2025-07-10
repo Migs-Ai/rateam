@@ -3,12 +3,14 @@ import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { Textarea } from "@/components/ui/textarea";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Loader2, Building2, User } from "lucide-react";
 import { useAuth } from "@/hooks/useAuth";
 import { supabase } from "@/integrations/supabase/client";
-import { useNavigate } from "react-router-dom";
+import { useCategories } from "@/hooks/useCategories";
 
 interface SignUpFormProps {
   email: string;
@@ -34,13 +36,52 @@ export const SignUpForm = ({
   onEmailConfirmation 
 }: SignUpFormProps) => {
   const { signUp } = useAuth();
-  const navigate = useNavigate();
+  const { data: categories, isLoading: categoriesLoading } = useCategories();
   const [error, setError] = useState("");
   const [isLoading, setIsLoading] = useState(false);
+
+  // Vendor-specific form fields
+  const [vendorData, setVendorData] = useState({
+    businessName: "",
+    description: "",
+    category: "",
+    location: "",
+    phone: "",
+    whatsapp: "",
+    businessEmail: "",
+    preferredContact: "whatsapp"
+  });
+
+  const handleVendorDataChange = (field: string, value: string) => {
+    setVendorData(prev => ({ ...prev, [field]: value }));
+  };
+
+  const validateForm = () => {
+    if (selectedRole === "vendor") {
+      if (!vendorData.businessName.trim()) {
+        setError("Business name is required for vendors");
+        return false;
+      }
+      if (!vendorData.category) {
+        setError("Please select a business category");
+        return false;
+      }
+      if (!vendorData.location.trim()) {
+        setError("Business location is required");
+        return false;
+      }
+    }
+    return true;
+  };
 
   const handleSignUp = async (e: React.FormEvent) => {
     e.preventDefault();
     setError("");
+
+    if (!validateForm()) {
+      return;
+    }
+
     setIsLoading(true);
 
     try {
@@ -66,10 +107,26 @@ export const SignUpForm = ({
             console.error('Error assigning role:', roleError);
           }
 
-          // If vendor role selected, redirect to onboarding after email confirmation
+          // If vendor role selected, also create vendor profile
           if (selectedRole === 'vendor') {
-            // Store vendor onboarding flag in localStorage for after email confirmation
-            localStorage.setItem('pendingVendorOnboarding', 'true');
+            const { error: vendorError } = await supabase
+              .from('vendors')
+              .insert({
+                user_id: user.id,
+                business_name: vendorData.businessName,
+                description: vendorData.description,
+                category: vendorData.category,
+                location: vendorData.location,
+                phone: vendorData.phone,
+                whatsapp: vendorData.whatsapp,
+                email: vendorData.businessEmail || email,
+                preferred_contact: vendorData.preferredContact,
+                status: 'pending'
+              });
+            
+            if (vendorError) {
+              console.error('Error creating vendor profile:', vendorError);
+            }
           }
         }
       }
@@ -92,6 +149,7 @@ export const SignUpForm = ({
           required
         />
       </div>
+      
       <div className="space-y-2">
         <Label htmlFor="signupEmail">Email</Label>
         <Input
@@ -102,6 +160,7 @@ export const SignUpForm = ({
           required
         />
       </div>
+      
       <div className="space-y-2">
         <Label htmlFor="signupPassword">Password</Label>
         <Input
@@ -140,16 +199,128 @@ export const SignUpForm = ({
         </RadioGroup>
       </div>
 
+      {/* Vendor-specific fields */}
       {selectedRole === 'vendor' && (
-        <div className="bg-blue-50 p-3 rounded-lg border border-blue-200">
-          <div className="text-sm text-blue-800">
-            <strong>What happens next:</strong>
-            <ul className="mt-1 space-y-1 text-xs">
-              <li>• You'll receive an email confirmation</li>
-              <li>• After confirming, you'll be guided through business setup</li>
-              <li>• Add your business details, contact info, and category</li>
-              <li>• Your business will be reviewed before going live</li>
-            </ul>
+        <div className="space-y-4 p-4 bg-blue-50 rounded-lg border border-blue-200">
+          <h3 className="font-semibold text-blue-900 mb-3">Business Information</h3>
+          
+          <div className="space-y-2">
+            <Label htmlFor="businessName">Business Name *</Label>
+            <Input
+              id="businessName"
+              type="text"
+              value={vendorData.businessName}
+              onChange={(e) => handleVendorDataChange("businessName", e.target.value)}
+              placeholder="Enter your business name"
+              required
+            />
+          </div>
+
+          <div className="space-y-2">
+            <Label htmlFor="businessCategory">Business Category *</Label>
+            <Select value={vendorData.category} onValueChange={(value) => handleVendorDataChange("category", value)}>
+              <SelectTrigger>
+                <SelectValue placeholder="Select your business category" />
+              </SelectTrigger>
+              <SelectContent>
+                {categories?.map((category) => (
+                  <SelectItem key={category.id} value={category.name}>
+                    {category.name}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </div>
+
+          <div className="space-y-2">
+            <Label htmlFor="businessLocation">Business Location *</Label>
+            <Input
+              id="businessLocation"
+              type="text"
+              value={vendorData.location}
+              onChange={(e) => handleVendorDataChange("location", e.target.value)}
+              placeholder="City, State or Full Address"
+              required
+            />
+          </div>
+
+          <div className="space-y-2">
+            <Label htmlFor="businessDescription">Business Description</Label>
+            <Textarea
+              id="businessDescription"
+              value={vendorData.description}
+              onChange={(e) => handleVendorDataChange("description", e.target.value)}
+              placeholder="Describe your business, services, and specialties..."
+              rows={3}
+            />
+          </div>
+
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div className="space-y-2">
+              <Label htmlFor="businessPhone">Phone Number</Label>
+              <Input
+                id="businessPhone"
+                type="tel"
+                value={vendorData.phone}
+                onChange={(e) => handleVendorDataChange("phone", e.target.value)}
+                placeholder="+1 (555) 123-4567"
+              />
+            </div>
+            
+            <div className="space-y-2">
+              <Label htmlFor="businessWhatsapp">WhatsApp Number</Label>
+              <Input
+                id="businessWhatsapp"
+                type="tel"
+                value={vendorData.whatsapp}
+                onChange={(e) => handleVendorDataChange("whatsapp", e.target.value)}
+                placeholder="+1 (555) 123-4567"
+              />
+            </div>
+          </div>
+
+          <div className="space-y-2">
+            <Label htmlFor="businessEmail">Business Email</Label>
+            <Input
+              id="businessEmail"
+              type="email"
+              value={vendorData.businessEmail}
+              onChange={(e) => handleVendorDataChange("businessEmail", e.target.value)}
+              placeholder="business@example.com (optional - will use signup email if empty)"
+            />
+          </div>
+
+          <div className="space-y-3">
+            <Label>Preferred Contact Method</Label>
+            <RadioGroup 
+              value={vendorData.preferredContact} 
+              onValueChange={(value) => handleVendorDataChange("preferredContact", value)}
+            >
+              <div className="flex items-center space-x-2">
+                <RadioGroupItem value="whatsapp" id="whatsapp-contact" />
+                <Label htmlFor="whatsapp-contact">WhatsApp</Label>
+              </div>
+              <div className="flex items-center space-x-2">
+                <RadioGroupItem value="phone" id="phone-contact" />
+                <Label htmlFor="phone-contact">Phone Call</Label>
+              </div>
+              <div className="flex items-center space-x-2">
+                <RadioGroupItem value="email" id="email-contact" />
+                <Label htmlFor="email-contact">Email</Label>
+              </div>
+            </RadioGroup>
+          </div>
+
+          <div className="bg-green-50 p-3 rounded-lg border border-green-200">
+            <div className="text-sm text-green-800">
+              <strong>What happens next:</strong>
+              <ul className="mt-1 space-y-1 text-xs">
+                <li>• You'll receive an email confirmation</li>
+                <li>• Your business will be reviewed by our admin team</li>
+                <li>• Once approved, customers can find and review your business</li>
+                <li>• You'll get access to your vendor dashboard</li>
+              </ul>
+            </div>
           </div>
         </div>
       )}
@@ -159,7 +330,8 @@ export const SignUpForm = ({
           <AlertDescription>{error}</AlertDescription>
         </Alert>
       )}
-      <Button type="submit" className="w-full" disabled={isLoading}>
+      
+      <Button type="submit" className="w-full" disabled={isLoading || categoriesLoading}>
         {isLoading ? (
           <>
             <Loader2 className="w-4 h-4 mr-2 animate-spin" />
