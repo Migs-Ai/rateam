@@ -253,7 +253,7 @@ export const SignUpForm = ({
                 type="text"
                 value={location}
                 onChange={(e) => setLocation(e.target.value)}
-                placeholder="City, State"
+                placeholder="Full Location"
                 required
               />
             </div>
