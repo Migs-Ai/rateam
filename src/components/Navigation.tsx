@@ -1,8 +1,9 @@
 
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
-import { Search, User, Menu, X, LogOut } from "lucide-react";
+import { Search, User, Menu, X, LogOut, Building2 } from "lucide-react";
 import { useAuth } from "@/hooks/useAuth";
+import { useUserRole } from "@/hooks/useUserRole";
 import { useNavigate } from "react-router-dom";
 import {
   DropdownMenu,
@@ -16,6 +17,7 @@ import {
 const Navigation = () => {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const { user, signOut } = useAuth();
+  const { isVendor, isAdmin } = useUserRole();
   const navigate = useNavigate();
 
   const handleSignOut = async () => {
@@ -67,9 +69,17 @@ const Navigation = () => {
                   <DropdownMenuItem onClick={() => navigate("/profile")}>
                     Profile
                   </DropdownMenuItem>
-                  <DropdownMenuItem onClick={() => navigate("/admin")} className="text-purple-600">
-                    Admin
-                  </DropdownMenuItem>
+                  {isVendor && (
+                    <DropdownMenuItem onClick={() => navigate("/vendor-dashboard")} className="text-blue-600">
+                      <Building2 className="w-4 h-4 mr-2" />
+                      Vendor Dashboard
+                    </DropdownMenuItem>
+                  )}
+                  {isAdmin && (
+                    <DropdownMenuItem onClick={() => navigate("/admin")} className="text-purple-600">
+                      Admin
+                    </DropdownMenuItem>
+                  )}
                   <DropdownMenuSeparator />
                   <DropdownMenuItem onClick={handleSignOut} className="text-red-600">
                     <LogOut className="w-4 h-4 mr-2" />
@@ -130,9 +140,17 @@ const Navigation = () => {
                     <Button variant="outline" size="sm" onClick={() => navigate("/profile")}>
                       Profile
                     </Button>
-                    <Button variant="outline" size="sm" onClick={() => navigate("/admin")} className="text-purple-600">
-                      Admin
-                    </Button>
+                    {isVendor && (
+                      <Button variant="outline" size="sm" onClick={() => navigate("/vendor-dashboard")} className="text-blue-600">
+                        <Building2 className="w-4 h-4 mr-2" />
+                        Vendor Dashboard
+                      </Button>
+                    )}
+                    {isAdmin && (
+                      <Button variant="outline" size="sm" onClick={() => navigate("/admin")} className="text-purple-600">
+                        Admin
+                      </Button>
+                    )}
                     <Button variant="outline" size="sm" onClick={handleSignOut} className="text-red-600">
                       <LogOut className="w-4 h-4 mr-2" />
                       Sign Out

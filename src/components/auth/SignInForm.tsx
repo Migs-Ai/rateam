@@ -6,6 +6,8 @@ import { Label } from "@/components/ui/label";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Loader2 } from "lucide-react";
 import { useAuth } from "@/hooks/useAuth";
+import { useNavigate } from "react-router-dom";
+import { supabase } from "@/integrations/supabase/client";
 
 interface SignInFormProps {
   email: string;
@@ -16,6 +18,7 @@ interface SignInFormProps {
 
 export const SignInForm = ({ email, setEmail, password, setPassword }: SignInFormProps) => {
   const { signIn } = useAuth();
+  const navigate = useNavigate();
   const [error, setError] = useState("");
   const [isLoading, setIsLoading] = useState(false);
 
@@ -28,6 +31,32 @@ export const SignInForm = ({ email, setEmail, password, setPassword }: SignInFor
     
     if (error) {
       setError(error.message);
+      setIsLoading(false);
+      return;
+    }
+
+    // Check user role after successful login
+    try {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (user) {
+        const { data: roleData } = await supabase
+          .from('user_roles')
+          .select('role')
+          .eq('user_id', user.id)
+          .single();
+
+        // Redirect based on user role
+        if (roleData?.role === 'vendor') {
+          navigate('/vendor-dashboard');
+        } else if (roleData?.role === 'admin' || roleData?.role === 'super_admin') {
+          navigate('/admin');
+        } else {
+          navigate('/');
+        }
+      }
+    } catch (error) {
+      console.error('Error checking user role:', error);
+      navigate('/');
     }
     
     setIsLoading(false);
