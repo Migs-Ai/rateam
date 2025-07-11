@@ -5,8 +5,8 @@ import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
+import { Checkbox } from "@/components/ui/checkbox";
 import { Star, ArrowLeft } from "lucide-react";
 import { useAuth } from "@/hooks/useAuth";
 import { useToast } from "@/components/ui/use-toast";
@@ -23,6 +23,7 @@ const VendorReview = () => {
   const [rating, setRating] = useState(0);
   const [comment, setComment] = useState("");
   const [hoveredRating, setHoveredRating] = useState(0);
+  const [contactVisible, setContactVisible] = useState(false);
 
   const { data: vendor, isLoading } = useQuery({
     queryKey: ['vendor', id],
@@ -52,7 +53,8 @@ const VendorReview = () => {
           vendor_id: id,
           user_id: user.id,
           rating,
-          comment: comment.trim() || null
+          comment: comment.trim() || null,
+          customer_contact_visible: contactVisible
         });
 
       if (error) throw error;
@@ -185,6 +187,29 @@ const VendorReview = () => {
                       rows={4}
                     />
                   </div>
+
+                  <div className="flex items-center space-x-2">
+                    <Checkbox
+                      id="contact-visible"
+                      checked={contactVisible}
+                      onCheckedChange={setContactVisible}
+                    />
+                    <label
+                      htmlFor="contact-visible"
+                      className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70"
+                    >
+                      Allow the business owner to contact me about this review
+                    </label>
+                  </div>
+                  
+                  {contactVisible && (
+                    <div className="text-xs text-muted-foreground bg-blue-50 dark:bg-blue-950/20 p-3 rounded border">
+                      <p className="font-medium mb-1">Contact Information Sharing:</p>
+                      <p>
+                        By checking this option, you allow the business owner to see your email address and phone number (if provided in your profile) so they can follow up on your review if needed.
+                      </p>
+                    </div>
+                  )}
 
                   <div className="flex space-x-4">
                     <Button

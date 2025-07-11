@@ -196,32 +196,41 @@ export type Database = {
         Row: {
           comment: string | null
           created_at: string | null
+          customer_contact_visible: boolean | null
           id: string
           rating: number
           status: string | null
           updated_at: string | null
           user_id: string
           vendor_id: string
+          vendor_reply: string | null
+          vendor_reply_at: string | null
         }
         Insert: {
           comment?: string | null
           created_at?: string | null
+          customer_contact_visible?: boolean | null
           id?: string
           rating: number
           status?: string | null
           updated_at?: string | null
           user_id: string
           vendor_id: string
+          vendor_reply?: string | null
+          vendor_reply_at?: string | null
         }
         Update: {
           comment?: string | null
           created_at?: string | null
+          customer_contact_visible?: boolean | null
           id?: string
           rating?: number
           status?: string | null
           updated_at?: string | null
           user_id?: string
           vendor_id?: string
+          vendor_reply?: string | null
+          vendor_reply_at?: string | null
         }
         Relationships: [
           {

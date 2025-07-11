@@ -7,9 +7,9 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
-import { Star, MessageCircle, TrendingUp, Building2, Phone, Mail, MapPin, Edit, Camera } from "lucide-react";
-import { Separator } from "@/components/ui/separator";
+import { Star, MessageCircle, TrendingUp, Building2, Phone, Mail, MapPin, Edit } from "lucide-react";
 import { VendorProfileEdit } from "@/components/VendorProfileEdit";
+import { VendorReviewManagement } from "@/components/VendorReviewManagement";
 
 const VendorDashboard = () => {
   const { user } = useAuth();
@@ -22,7 +22,7 @@ const VendorDashboard = () => {
     }
   }, [user, navigate]);
 
-  const { data: vendor, isLoading: vendorLoading, refetch: refetchVendor } = useQuery({
+  const { data: vendor, isLoading: vendorLoading } = useQuery({
     queryKey: ['vendor-profile', user?.id],
     queryFn: async () => {
       if (!user?.id) return null;
@@ -43,28 +43,6 @@ const VendorDashboard = () => {
       return data;
     },
     enabled: !!user?.id
-  });
-
-  const { data: reviews, isLoading: reviewsLoading } = useQuery({
-    queryKey: ['vendor-reviews', vendor?.id],
-    queryFn: async () => {
-      if (!vendor?.id) return [];
-      const { data, error } = await supabase
-        .from('reviews')
-        .select(`
-          *,
-          profiles (
-            full_name,
-            avatar_url
-          )
-        `)
-        .eq('vendor_id', vendor.id)
-        .order('created_at', { ascending: false });
-
-      if (error) throw error;
-      return data;
-    },
-    enabled: !!vendor?.id
   });
 
   if (vendorLoading) {
@@ -107,11 +85,6 @@ const VendorDashboard = () => {
       default: return 'secondary';
     }
   };
-
-  const approvedReviews = reviews?.filter(review => review.status === 'approved') || [];
-  const averageRating = approvedReviews.length > 0 
-    ? approvedReviews.reduce((sum, review) => sum + review.rating, 0) / approvedReviews.length 
-    : 0;
 
   if (isEditing) {
     return (
@@ -181,12 +154,12 @@ const VendorDashboard = () => {
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
               <div className="flex items-center gap-2">
                 <Star className="h-4 w-4 text-yellow-500" />
-                <span className="font-semibold">{averageRating.toFixed(1)}</span>
+                <span className="font-semibold">{(vendor.rating || 0).toFixed(1)}</span>
                 <span className="text-muted-foreground">Rating</span>
               </div>
               <div className="flex items-center gap-2">
                 <MessageCircle className="h-4 w-4 text-blue-500" />
-                <span className="font-semibold">{approvedReviews.length}</span>
+                <span className="font-semibold">{vendor.review_count || 0}</span>
                 <span className="text-muted-foreground">Reviews</span>
               </div>
               <div className="flex items-center gap-2">
@@ -231,63 +204,8 @@ const VendorDashboard = () => {
           </CardContent>
         </Card>
 
-        {/* Reviews Section */}
-        <Card>
-          <CardHeader>
-            <CardTitle>Customer Reviews</CardTitle>
-            <CardDescription>
-              Recent feedback from your customers
-            </CardDescription>
-          </CardHeader>
-          <CardContent>
-            {reviewsLoading ? (
-              <div className="text-center py-8">
-                <div className="animate-spin rounded-full h-6 w-6 border-b-2 border-primary mx-auto mb-2"></div>
-                <p className="text-muted-foreground">Loading reviews...</p>
-              </div>
-            ) : approvedReviews.length === 0 ? (
-              <div className="text-center py-8">
-                <MessageCircle className="h-12 w-12 text-muted-foreground mx-auto mb-2" />
-                <p className="text-muted-foreground">No reviews yet</p>
-                <p className="text-sm text-muted-foreground">
-                  Reviews will appear here once customers start rating your business
-                </p>
-              </div>
-            ) : (
-              <div className="space-y-4">
-                {approvedReviews.map((review) => (
-                  <div key={review.id} className="border rounded-lg p-4">
-                    <div className="flex items-center justify-between mb-2">
-                      <div className="flex items-center gap-2">
-                        <div className="font-medium">
-                          {review.profiles?.full_name || 'Anonymous'}
-                        </div>
-                        <div className="flex items-center">
-                          {[...Array(5)].map((_, i) => (
-                            <Star
-                              key={i}
-                              className={`h-4 w-4 ${
-                                i < review.rating
-                                  ? 'text-yellow-500 fill-current'
-                                  : 'text-gray-300'
-                              }`}
-                            />
-                          ))}
-                        </div>
-                      </div>
-                      <span className="text-sm text-muted-foreground">
-                        {new Date(review.created_at).toLocaleDateString()}
-                      </span>
-                    </div>
-                    {review.comment && (
-                      <p className="text-muted-foreground">{review.comment}</p>
-                    )}
-                  </div>
-                ))}
-              </div>
-            )}
-          </CardContent>
-        </Card>
+        {/* Reviews Management Section */}
+        <VendorReviewManagement vendorId={vendor.id} />
       </div>
     </div>
   );

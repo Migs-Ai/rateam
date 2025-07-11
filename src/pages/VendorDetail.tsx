@@ -87,7 +87,6 @@ const VendorDetail = () => {
       navigate("/auth");
       return;
     }
-    // For now, we'll navigate to a simple review page - this can be enhanced later
     navigate(`/vendor/${id}/review`);
   };
 
@@ -215,9 +214,9 @@ const VendorDetail = () => {
                       </p>
                     </div>
                   ) : (
-                    <div className="space-y-4">
+                    <div className="space-y-6">
                       {reviews.map((review) => (
-                        <div key={review.id} className="border rounded-lg p-4">
+                        <div key={review.id} className="border rounded-lg p-4 space-y-3">
                           <div className="flex items-center justify-between mb-2">
                             <div className="flex items-center gap-2">
                               <div className="font-medium">
@@ -240,8 +239,27 @@ const VendorDetail = () => {
                               {new Date(review.created_at).toLocaleDateString()}
                             </span>
                           </div>
+                          
+                          {/* Customer Review */}
                           {review.comment && (
-                            <p className="text-muted-foreground">{review.comment}</p>
+                            <p className="text-muted-foreground bg-muted/50 p-3 rounded">
+                              "{review.comment}"
+                            </p>
+                          )}
+                          
+                          {/* Vendor Reply */}
+                          {review.vendor_reply && (
+                            <div className="bg-blue-50 dark:bg-blue-950/20 p-3 rounded border border-blue-200 dark:border-blue-800 mt-3">
+                              <div className="flex items-center gap-2 mb-2">
+                                <Badge variant="outline" className="text-blue-700 dark:text-blue-300">
+                                  Business Reply
+                                </Badge>
+                                <span className="text-xs text-muted-foreground">
+                                  {new Date(review.vendor_reply_at!).toLocaleDateString()}
+                                </span>
+                              </div>
+                              <p className="text-blue-800 dark:text-blue-200">{review.vendor_reply}</p>
+                            </div>
                           )}
                         </div>
                       ))}
