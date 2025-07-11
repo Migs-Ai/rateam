@@ -1,18 +1,20 @@
 
 import { useAuth } from "@/hooks/useAuth";
 import { useNavigate } from "react-router-dom";
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
-import { Star, MessageCircle, TrendingUp, Building2, Phone, Mail, MapPin } from "lucide-react";
+import { Star, MessageCircle, TrendingUp, Building2, Phone, Mail, MapPin, Edit, Camera } from "lucide-react";
 import { Separator } from "@/components/ui/separator";
+import { VendorProfileEdit } from "@/components/VendorProfileEdit";
 
 const VendorDashboard = () => {
   const { user } = useAuth();
   const navigate = useNavigate();
+  const [isEditing, setIsEditing] = useState(false);
 
   useEffect(() => {
     if (!user) {
@@ -20,17 +22,24 @@ const VendorDashboard = () => {
     }
   }, [user, navigate]);
 
-  const { data: vendor, isLoading: vendorLoading } = useQuery({
+  const { data: vendor, isLoading: vendorLoading, refetch: refetchVendor } = useQuery({
     queryKey: ['vendor-profile', user?.id],
     queryFn: async () => {
       if (!user?.id) return null;
+      console.log('Fetching vendor data for user:', user.id);
+      
       const { data, error } = await supabase
         .from('vendors')
         .select('*')
         .eq('user_id', user.id)
         .single();
 
-      if (error) throw error;
+      if (error) {
+        console.error('Error fetching vendor:', error);
+        throw error;
+      }
+      
+      console.log('Vendor data fetched:', data);
       return data;
     },
     enabled: !!user?.id
@@ -58,7 +67,18 @@ const VendorDashboard = () => {
     enabled: !!vendor?.id
   });
 
-  if (!vendor && !vendorLoading) {
+  if (vendorLoading) {
+    return (
+      <div className="min-h-screen bg-background flex items-center justify-center">
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary mx-auto mb-4"></div>
+          <p className="text-muted-foreground">Loading your dashboard...</p>
+        </div>
+      </div>
+    );
+  }
+
+  if (!vendor) {
     return (
       <div className="min-h-screen bg-background flex items-center justify-center p-4">
         <Card className="w-full max-w-md">
@@ -79,17 +99,6 @@ const VendorDashboard = () => {
     );
   }
 
-  if (vendorLoading) {
-    return (
-      <div className="min-h-screen bg-background flex items-center justify-center">
-        <div className="text-center">
-          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary mx-auto mb-4"></div>
-          <p className="text-muted-foreground">Loading your dashboard...</p>
-        </div>
-      </div>
-    );
-  }
-
   const getStatusColor = (status: string) => {
     switch (status) {
       case 'approved': return 'default';
@@ -104,6 +113,19 @@ const VendorDashboard = () => {
     ? approvedReviews.reduce((sum, review) => sum + review.rating, 0) / approvedReviews.length 
     : 0;
 
+  if (isEditing) {
+    return (
+      <div className="min-h-screen bg-background p-4">
+        <div className="max-w-4xl mx-auto">
+          <VendorProfileEdit 
+            vendor={vendor} 
+            onCancel={() => setIsEditing(false)} 
+          />
+        </div>
+      </div>
+    );
+  }
+
   return (
     <div className="min-h-screen bg-background p-4">
       <div className="max-w-6xl mx-auto space-y-6">
@@ -113,9 +135,15 @@ const VendorDashboard = () => {
             <h1 className="text-3xl font-bold">Business Dashboard</h1>
             <p className="text-muted-foreground">Manage your business profile and reviews</p>
           </div>
-          <Button variant="outline" onClick={() => navigate("/")}>
-            View Public Profile
-          </Button>
+          <div className="flex gap-2">
+            <Button variant="outline" onClick={() => navigate("/")}>
+              View Public Profile
+            </Button>
+            <Button onClick={() => setIsEditing(true)}>
+              <Edit className="h-4 w-4 mr-2" />
+              Edit Profile
+            </Button>
+          </div>
         </div>
 
         {/* Business Status Card */}
@@ -134,6 +162,21 @@ const VendorDashboard = () => {
               </Badge>
             </div>
           </CardHeader>
+
+          {/* Business Image */}
+          {vendor.image_url && (
+            <div className="px-6 pb-4">
+              <img 
+                src={vendor.image_url} 
+                alt={vendor.business_name} 
+                className="w-full h-48 object-cover rounded-lg"
+                onError={(e) => {
+                  e.currentTarget.style.display = 'none';
+                }}
+              />
+            </div>
+          )}
+
           <CardContent>
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
               <div className="flex items-center gap-2">

@@ -1,7 +1,10 @@
+
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Star, MapPin, Phone, Clock } from "lucide-react";
+import { useNavigate } from "react-router-dom";
+import { useAuth } from "@/hooks/useAuth";
 
 interface VendorCardProps {
   vendor: {
@@ -20,6 +23,9 @@ interface VendorCardProps {
 }
 
 const VendorCard = ({ vendor }: VendorCardProps) => {
+  const navigate = useNavigate();
+  const { user } = useAuth();
+
   const renderStars = (rating: number) => {
     return Array.from({ length: 5 }, (_, index) => (
       <Star
@@ -33,6 +39,19 @@ const VendorCard = ({ vendor }: VendorCardProps) => {
         }`}
       />
     ));
+  };
+
+  const handleWriteReview = () => {
+    if (!user) {
+      navigate("/auth");
+      return;
+    }
+    // For now, we'll navigate to a simple review page - this can be enhanced later
+    navigate(`/vendor/${vendor.id}/review`);
+  };
+
+  const handleViewDetails = () => {
+    navigate(`/vendor/${vendor.id}`);
   };
 
   return (
@@ -113,6 +132,7 @@ const VendorCard = ({ vendor }: VendorCardProps) => {
           <Button 
             size="sm" 
             className="flex-1 bg-gradient-primary text-white border-0 hover:shadow-soft"
+            onClick={handleViewDetails}
           >
             View Details
           </Button>
@@ -120,6 +140,7 @@ const VendorCard = ({ vendor }: VendorCardProps) => {
             variant="outline" 
             size="sm"
             className="flex-1 hover:bg-accent"
+            onClick={handleWriteReview}
           >
             Write Review
           </Button>
