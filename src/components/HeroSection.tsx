@@ -1,15 +1,40 @@
+
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Search, Star, Users, MapPin } from "lucide-react";
+import { useAuth } from "@/hooks/useAuth";
+import { useNavigate } from "react-router-dom";
 
 const HeroSection = () => {
   const [searchQuery, setSearchQuery] = useState("");
+  const { user } = useAuth();
+  const navigate = useNavigate();
 
   const handleSearch = (e: React.FormEvent) => {
     e.preventDefault();
     // TODO: Implement search functionality
     console.log("Searching for:", searchQuery);
+  };
+
+  const handleStartReviewing = () => {
+    if (!user) {
+      navigate("/auth");
+      return;
+    }
+    // Scroll to vendors section to start reviewing
+    const vendorsSection = document.getElementById("vendors");
+    if (vendorsSection) {
+      vendorsSection.scrollIntoView({ behavior: "smooth" });
+    }
+  };
+
+  const handleListBusiness = () => {
+    if (!user) {
+      navigate("/auth");
+      return;
+    }
+    navigate("/vendor-onboarding");
   };
 
   const stats = [
@@ -64,6 +89,7 @@ const HeroSection = () => {
             <Button 
               size="lg" 
               className="bg-gradient-primary text-white border-0 hover:shadow-soft h-12 px-8 rounded-full"
+              onClick={handleStartReviewing}
             >
               Start Reviewing
             </Button>
@@ -71,6 +97,7 @@ const HeroSection = () => {
               variant="outline" 
               size="lg"
               className="h-12 px-8 rounded-full border-2 hover:bg-accent"
+              onClick={handleListBusiness}
             >
               List Your Business
             </Button>
