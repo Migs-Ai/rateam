@@ -12,6 +12,7 @@ import About from "./pages/About";
 import Polls from "./pages/Polls";
 import VendorOnboarding from "./pages/VendorOnboarding";
 import VendorDashboard from "./pages/VendorDashboard";
+import VendorDetail from "./pages/VendorDetail";
 import NotFound from "./pages/NotFound";
 import ProtectedRoute from "./components/auth/ProtectedRoute";
 
@@ -39,6 +40,7 @@ const App = () => (
             <Route path="/polls" element={<Polls />} />
             <Route path="/vendor-onboarding" element={<VendorOnboarding />} />
             <Route path="/vendor-dashboard" element={<VendorDashboard />} />
+            <Route path="/vendor/:id" element={<VendorDetail />} />
             {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
             <Route path="*" element={<NotFound />} />
           </Routes>
