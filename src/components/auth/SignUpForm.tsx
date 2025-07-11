@@ -17,14 +17,28 @@ interface SignUpFormProps {
   setPassword: (password: string) => void;
   fullName: string;
   setFullName: (fullName: string) => void;
+  selectedRole: "user" | "vendor";
+  setSelectedRole: (role: "user" | "vendor") => void;
+  onEmailConfirmation: () => void;
+  onRegistrationSuccess: (email: string, isVendor: boolean) => void;
 }
 
-export const SignUpForm = ({ email, setEmail, password, setPassword, fullName, setFullName }: SignUpFormProps) => {
+export const SignUpForm = ({ 
+  email, 
+  setEmail, 
+  password, 
+  setPassword, 
+  fullName, 
+  setFullName,
+  selectedRole,
+  setSelectedRole,
+  onEmailConfirmation,
+  onRegistrationSuccess
+}: SignUpFormProps) => {
   const { signUp } = useAuth();
   const { toast } = useToast();
   const [error, setError] = useState("");
   const [isLoading, setIsLoading] = useState(false);
-  const [selectedRole, setSelectedRole] = useState<string>("user");
   const [businessName, setBusinessName] = useState("");
   const [category, setCategory] = useState("");
   const [location, setLocation] = useState("");
@@ -56,7 +70,7 @@ export const SignUpForm = ({ email, setEmail, password, setPassword, fullName, s
         console.log('Processing vendor registration...');
         
         // Wait for the user to be created and trigger to run
-        await new Promise(resolve => setTimeout(resolve, 2000));
+        await new Promise(resolve => setTimeout(resolve, 3000));
         
         // Get the current user after signup
         const { data: { user }, error: userError } = await supabase.auth.getUser();
@@ -71,22 +85,33 @@ export const SignUpForm = ({ email, setEmail, password, setPassword, fullName, s
         } else {
           console.log('Processing vendor setup for user:', user.id);
           
-          // Update the role to vendor
-          const { error: roleError } = await supabase
-            .from('user_roles')
-            .update({ role: 'vendor' })
-            .eq('user_id', user.id);
+          // Update the role to vendor with retry logic
+          let roleUpdateSuccess = false;
+          for (let i = 0; i < 3; i++) {
+            const { error: roleError } = await supabase
+              .from('user_roles')
+              .update({ role: 'vendor' })
+              .eq('user_id', user.id);
 
-          if (roleError) {
-            console.error('Error updating user role:', roleError);
+            if (!roleError) {
+              roleUpdateSuccess = true;
+              console.log('User role updated to vendor successfully');
+              break;
+            }
+            
+            console.log(`Role update attempt ${i + 1} failed:`, roleError);
+            if (i < 2) {
+              await new Promise(resolve => setTimeout(resolve, 1000));
+            }
+          }
+
+          if (!roleUpdateSuccess) {
             toast({
               title: "Warning",
               description: "Account created but role assignment failed. Please contact support.",
               variant: "destructive"
             });
           } else {
-            console.log('User role updated to vendor successfully');
-            
             // Create vendor record
             const { error: vendorError } = await supabase
               .from('vendors')
@@ -99,7 +124,7 @@ export const SignUpForm = ({ email, setEmail, password, setPassword, fullName, s
                 phone: phone,
                 whatsapp: whatsapp,
                 email: email,
-                status: 'pending',
+                status: 'approved',
                 preferred_contact: 'email'
               });
 
@@ -111,19 +136,18 @@ export const SignUpForm = ({ email, setEmail, password, setPassword, fullName, s
               });
             } else {
               console.log('Vendor record created successfully');
-              toast({
-                title: "Success",
-                description: "Vendor account created successfully! Please check your email to verify your account.",
-              });
             }
           }
         }
-      } else {
-        toast({
-          title: "Success",
-          description: "Account created successfully! Please check your email to verify your account.",
-        });
       }
+
+      // Call the success callback
+      onRegistrationSuccess(email, selectedRole === "vendor");
+      
+      toast({
+        title: "Success",
+        description: "Account created successfully! Please check your email to verify your account.",
+      });
     } catch (error) {
       console.error('Unexpected error during signup:', error);
       setError('An unexpected error occurred');
