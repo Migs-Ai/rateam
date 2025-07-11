@@ -37,7 +37,7 @@ export const SignInForm = ({ email, setEmail, password, setPassword }: SignInFor
       }
 
       // Wait a moment for auth state to update
-      await new Promise(resolve => setTimeout(resolve, 1000));
+      await new Promise(resolve => setTimeout(resolve, 1500));
 
       // Check user role after successful login
       const { data: { user } } = await supabase.auth.getUser();
@@ -49,24 +49,13 @@ export const SignInForm = ({ email, setEmail, password, setPassword }: SignInFor
           .from('user_roles')
           .select('role')
           .eq('user_id', user.id)
-          .single();
+          .maybeSingle();
 
         console.log('User role query result:', {
           roleData,
           roleError,
           userId: user.id
         });
-
-        // If no role found, check if we can get any user_roles for debugging
-        if (!roleData && roleError) {
-          console.log('No role found, checking all user_roles for debugging...');
-          const { data: allRoles, error: allRolesError } = await supabase
-            .from('user_roles')
-            .select('*')
-            .eq('user_id', user.id);
-          
-          console.log('All roles for user:', allRoles, 'Error:', allRolesError);
-        }
 
         // Redirect based on user role
         if (roleData?.role === 'vendor') {
@@ -76,7 +65,7 @@ export const SignInForm = ({ email, setEmail, password, setPassword }: SignInFor
           console.log('Redirecting to admin dashboard');
           navigate('/admin');
         } else {
-          console.log('Redirecting to home page - role:', roleData?.role || 'none');
+          console.log('Redirecting to home page - role:', roleData?.role || 'user');
           navigate('/');
         }
       }
