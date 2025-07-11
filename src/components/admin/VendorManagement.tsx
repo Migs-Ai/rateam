@@ -34,7 +34,9 @@ export const VendorManagement = () => {
 
       if (error) throw error;
       return data;
-    }
+    },
+    refetchInterval: 30000,
+    refetchOnWindowFocus: true
   });
 
   const updateStatusMutation = useMutation({

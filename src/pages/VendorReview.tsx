@@ -62,7 +62,10 @@ const VendorReview = () => {
         title: "Review submitted!",
         description: "Thank you for your feedback. Your review has been submitted for approval.",
       });
+      // Invalidate both vendor-specific reviews and admin vendors list
       queryClient.invalidateQueries({ queryKey: ['vendor-reviews', id] });
+      queryClient.invalidateQueries({ queryKey: ['admin-vendors'] });
+      queryClient.invalidateQueries({ queryKey: ['vendors'] });
       navigate(`/vendor/${id}`);
     },
     onError: (error) => {
