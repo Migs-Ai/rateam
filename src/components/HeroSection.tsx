@@ -1,4 +1,3 @@
-
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -6,15 +5,25 @@ import { Search, Star, Users, MapPin } from "lucide-react";
 import { useAuth } from "@/hooks/useAuth";
 import { useNavigate } from "react-router-dom";
 
-const HeroSection = () => {
+interface HeroSectionProps {
+  onSearch?: (query: string) => void;
+}
+
+const HeroSection = ({ onSearch }: HeroSectionProps) => {
   const [searchQuery, setSearchQuery] = useState("");
   const { user } = useAuth();
   const navigate = useNavigate();
 
   const handleSearch = (e: React.FormEvent) => {
     e.preventDefault();
-    // TODO: Implement search functionality
-    console.log("Searching for:", searchQuery);
+    if (onSearch) {
+      onSearch(searchQuery);
+    }
+    // Scroll to vendors section after search
+    const vendorsSection = document.getElementById("vendors");
+    if (vendorsSection) {
+      vendorsSection.scrollIntoView({ behavior: "smooth" });
+    }
   };
 
   const handleStartReviewing = () => {

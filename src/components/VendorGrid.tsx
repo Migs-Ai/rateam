@@ -1,5 +1,5 @@
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
@@ -9,10 +9,21 @@ import { Search, Filter } from "lucide-react";
 import { useVendors } from "@/hooks/useVendors";
 import { useCategories } from "@/hooks/useCategories";
 
-const VendorGrid = () => {
+interface VendorGridProps {
+  heroSearchQuery?: string;
+}
+
+const VendorGrid = ({ heroSearchQuery }: VendorGridProps) => {
   const [searchTerm, setSearchTerm] = useState("");
   const [selectedCategory, setSelectedCategory] = useState("All Categories");
   const [sortBy, setSortBy] = useState("rating");
+
+  // Update local search term when hero search query changes
+  useEffect(() => {
+    if (heroSearchQuery) {
+      setSearchTerm(heroSearchQuery);
+    }
+  }, [heroSearchQuery]);
 
   const { data: vendors = [], isLoading: vendorsLoading, error: vendorsError } = useVendors(
     searchTerm, 
