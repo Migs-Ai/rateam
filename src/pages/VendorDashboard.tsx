@@ -7,14 +7,20 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
-import { Star, MessageCircle, TrendingUp, Building2, Phone, Mail, MapPin, Edit } from "lucide-react";
+import { Star, MessageCircle, TrendingUp, Building2, Phone, Mail, MapPin, Edit, Image as ImageIcon } from "lucide-react";
 import { VendorProfileEdit } from "@/components/VendorProfileEdit";
 import { VendorReviewManagement } from "@/components/VendorReviewManagement";
+import { ImageUpload } from "@/components/ImageUpload";
+import { useMutation, useQueryClient } from "@tanstack/react-query";
+import { useToast } from "@/hooks/use-toast";
 
 const VendorDashboard = () => {
   const { user } = useAuth();
   const navigate = useNavigate();
   const [isEditing, setIsEditing] = useState(false);
+  const [showImageUpload, setShowImageUpload] = useState(false);
+  const { toast } = useToast();
+  const queryClient = useQueryClient();
 
   useEffect(() => {
     if (!user) {
@@ -43,6 +49,42 @@ const VendorDashboard = () => {
       return data;
     },
     enabled: !!user?.id
+  });
+
+  const updateVendorImagesMutation = useMutation({
+    mutationFn: async ({ profileImage, galleryImages }: { profileImage?: string[], galleryImages?: string[] }) => {
+      if (!vendor?.id) throw new Error('No vendor found');
+      
+      const updates: any = {};
+      if (profileImage !== undefined) {
+        updates.image_url = profileImage[0] || null;
+      }
+      if (galleryImages !== undefined) {
+        updates.gallery = galleryImages;
+      }
+
+      const { error } = await supabase
+        .from('vendors')
+        .update(updates)
+        .eq('id', vendor.id);
+
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['vendor-profile', user?.id] });
+      toast({
+        title: "Images updated",
+        description: "Your business images have been updated successfully.",
+      });
+    },
+    onError: (error) => {
+      console.error('Update error:', error);
+      toast({
+        title: "Update failed",
+        description: "Failed to update images. Please try again.",
+        variant: "destructive",
+      });
+    }
   });
 
   if (vendorLoading) {
@@ -112,6 +154,10 @@ const VendorDashboard = () => {
             <Button variant="outline" onClick={() => navigate("/")}>
               View Public Profile
             </Button>
+            <Button variant="outline" onClick={() => setShowImageUpload(!showImageUpload)}>
+              <ImageIcon className="h-4 w-4 mr-2" />
+              Manage Images
+            </Button>
             <Button onClick={() => setIsEditing(true)}>
               <Edit className="h-4 w-4 mr-2" />
               Edit Profile
@@ -174,6 +220,41 @@ const VendorDashboard = () => {
             </div>
           </CardContent>
         </Card>
+
+        {/* Image Management Section */}
+        {showImageUpload && (
+          <Card>
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2">
+                <ImageIcon className="h-5 w-5" />
+                Manage Business Images
+              </CardTitle>
+              <CardDescription>
+                Upload your profile picture and gallery images to showcase your business
+              </CardDescription>
+            </CardHeader>
+            <CardContent className="space-y-6">
+              {/* Profile Picture Upload */}
+              <ImageUpload
+                currentImages={vendor.image_url ? [vendor.image_url] : []}
+                onImagesChange={(images) => updateVendorImagesMutation.mutate({ profileImage: images })}
+                maxImages={1}
+                bucketName="vendor-profiles"
+                label="Profile Picture"
+                isProfilePicture={true}
+              />
+
+              {/* Gallery Upload */}
+              <ImageUpload
+                currentImages={Array.isArray(vendor.gallery) ? vendor.gallery as string[] : []}
+                onImagesChange={(images) => updateVendorImagesMutation.mutate({ galleryImages: images })}
+                maxImages={4}
+                bucketName="vendor-galleries"
+                label="Business Gallery"
+              />
+            </CardContent>
+          </Card>
+        )}
 
         {/* Contact Information */}
         <Card>
