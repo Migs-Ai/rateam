@@ -7,10 +7,11 @@ import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
-import { Plus, Trash2, Calendar, Users, Vote } from "lucide-react";
+import { Plus, Trash2, Calendar, Users, Vote, Eye, ArrowLeft } from "lucide-react";
 import { toast } from "sonner";
 import { Badge } from "@/components/ui/badge";
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
+import { Progress } from "@/components/ui/progress";
 
 interface Poll {
   id: string;
@@ -24,6 +25,7 @@ interface Poll {
 
 export const PollManagement = () => {
   const [isCreateDialogOpen, setIsCreateDialogOpen] = useState(false);
+  const [selectedPoll, setSelectedPoll] = useState<Poll | null>(null);
   const [newPoll, setNewPoll] = useState({
     title: "",
     description: "",
@@ -44,6 +46,28 @@ export const PollManagement = () => {
       if (error) throw error;
       return data as Poll[];
     }
+  });
+
+  const { data: pollVotes, isLoading: votesLoading } = useQuery({
+    queryKey: ['poll-votes', selectedPoll?.id],
+    queryFn: async () => {
+      if (!selectedPoll?.id) return [];
+      
+      const { data, error } = await supabase
+        .from('poll_votes')
+        .select(`
+          *,
+          profiles (
+            full_name,
+            email
+          )
+        `)
+        .eq('poll_id', selectedPoll.id);
+
+      if (error) throw error;
+      return data;
+    },
+    enabled: !!selectedPoll?.id
   });
 
   const createPollMutation = useMutation({
@@ -123,6 +147,162 @@ export const PollManagement = () => {
       toast.error('Please provide a title and at least 2 options');
     }
   };
+
+  const getPollStats = (poll: Poll) => {
+    if (!pollVotes) return { totalVotes: 0, optionStats: [] };
+    
+    const totalVotes = pollVotes.length;
+    const optionStats = poll.options.map((option, index) => {
+      const votes = pollVotes.filter(vote => vote.option_index === index).length;
+      const percentage = totalVotes > 0 ? (votes / totalVotes) * 100 : 0;
+      return { option, votes, percentage };
+    });
+    
+    return { totalVotes, optionStats };
+  };
+
+  if (selectedPoll) {
+    const { totalVotes, optionStats } = getPollStats(selectedPoll);
+    
+    return (
+      <div className="space-y-6">
+        <div className="flex items-center gap-4">
+          <Button 
+            variant="outline" 
+            onClick={() => setSelectedPoll(null)}
+            className="flex items-center gap-2"
+          >
+            <ArrowLeft className="w-4 h-4" />
+            Back to Polls
+          </Button>
+          <div>
+            <h2 className="text-2xl font-bold text-foreground">{selectedPoll.title}</h2>
+            <p className="text-muted-foreground">Poll Details & Results</p>
+          </div>
+        </div>
+
+        <div className="grid gap-6 md:grid-cols-2">
+          {/* Poll Information */}
+          <Card>
+            <CardHeader>
+              <CardTitle>Poll Information</CardTitle>
+            </CardHeader>
+            <CardContent className="space-y-4">
+              <div>
+                <Label className="text-sm font-medium">Title</Label>
+                <p className="text-foreground">{selectedPoll.title}</p>
+              </div>
+              
+              {selectedPoll.description && (
+                <div>
+                  <Label className="text-sm font-medium">Description</Label>
+                  <p className="text-foreground">{selectedPoll.description}</p>
+                </div>
+              )}
+              
+              <div className="flex items-center gap-4">
+                <Badge variant={selectedPoll.status === 'active' ? 'default' : 'secondary'}>
+                  {selectedPoll.status}
+                </Badge>
+                {selectedPoll.ends_at && (
+                  <div className="flex items-center gap-1 text-sm text-muted-foreground">
+                    <Calendar className="w-3 h-3" />
+                    Ends {new Date(selectedPoll.ends_at).toLocaleDateString()}
+                  </div>
+                )}
+              </div>
+              
+              <div className="text-sm text-muted-foreground">
+                Created on {new Date(selectedPoll.created_at).toLocaleDateString()}
+              </div>
+              
+              <div className="flex items-center gap-2 text-lg font-semibold">
+                <Users className="w-5 h-5" />
+                {totalVotes} Total Votes
+              </div>
+            </CardContent>
+          </Card>
+
+          {/* Voting Results */}
+          <Card>
+            <CardHeader>
+              <CardTitle>Voting Results</CardTitle>
+            </CardHeader>
+            <CardContent>
+              {votesLoading ? (
+                <div className="space-y-3">
+                  {[...Array(selectedPoll.options.length)].map((_, i) => (
+                    <div key={i} className="space-y-2">
+                      <div className="h-4 bg-muted rounded animate-pulse"></div>
+                      <div className="h-2 bg-muted rounded animate-pulse"></div>
+                    </div>
+                  ))}
+                </div>
+              ) : (
+                <div className="space-y-4">
+                  {optionStats.map((stat, index) => (
+                    <div key={index} className="space-y-2">
+                      <div className="flex justify-between items-center">
+                        <span className="font-medium">{stat.option}</span>
+                        <span className="text-sm text-muted-foreground">
+                          {stat.votes} votes ({stat.percentage.toFixed(1)}%)
+                        </span>
+                      </div>
+                      <Progress value={stat.percentage} className="h-2" />
+                    </div>
+                  ))}
+                  
+                  {totalVotes === 0 && (
+                    <div className="text-center py-8 text-muted-foreground">
+                      <Vote className="w-12 h-12 mx-auto mb-2 opacity-50" />
+                      <p>No votes yet</p>
+                    </div>
+                  )}
+                </div>
+              )}
+            </CardContent>
+          </Card>
+        </div>
+
+        {/* Voters List */}
+        {pollVotes && pollVotes.length > 0 && (
+          <Card>
+            <CardHeader>
+              <CardTitle>Recent Voters</CardTitle>
+              <CardDescription>Users who have voted in this poll</CardDescription>
+            </CardHeader>
+            <CardContent>
+              <div className="space-y-3">
+                {pollVotes.map((vote) => (
+                  <div key={vote.id} className="flex items-center justify-between p-3 bg-muted/50 rounded-lg">
+                    <div className="flex items-center gap-3">
+                      <div className="w-8 h-8 bg-primary/10 rounded-full flex items-center justify-center">
+                        <span className="text-sm font-medium text-primary">
+                          {vote.profiles?.full_name?.[0] || '?'}
+                        </span>
+                      </div>
+                      <div>
+                        <p className="font-medium">{vote.profiles?.full_name || 'Anonymous'}</p>
+                        <p className="text-sm text-muted-foreground">{vote.profiles?.email}</p>
+                      </div>
+                    </div>
+                    <div className="text-right">
+                      <p className="font-medium">
+                        {selectedPoll.options[vote.option_index]}
+                      </p>
+                      <p className="text-sm text-muted-foreground">
+                        {new Date(vote.created_at).toLocaleDateString()}
+                      </p>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </CardContent>
+          </Card>
+        )}
+      </div>
+    );
+  }
 
   if (isLoading) {
     return (
@@ -260,10 +440,10 @@ export const PollManagement = () => {
 
       <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
         {polls?.map((poll) => (
-          <Card key={poll.id}>
+          <Card key={poll.id} className="cursor-pointer hover:shadow-md transition-shadow">
             <CardHeader>
               <div className="flex justify-between items-start">
-                <div className="flex-1">
+                <div className="flex-1" onClick={() => setSelectedPoll(poll)}>
                   <CardTitle className="line-clamp-2 text-base">{poll.title}</CardTitle>
                   {poll.description && (
                     <CardDescription className="line-clamp-2 mt-1">
@@ -274,14 +454,17 @@ export const PollManagement = () => {
                 <Button
                   variant="outline"
                   size="icon"
-                  onClick={() => deletePollMutation.mutate(poll.id)}
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    deletePollMutation.mutate(poll.id);
+                  }}
                   disabled={deletePollMutation.isPending}
                 >
                   <Trash2 className="w-4 h-4" />
                 </Button>
               </div>
             </CardHeader>
-            <CardContent>
+            <CardContent onClick={() => setSelectedPoll(poll)}>
               <div className="space-y-3">
                 <div className="flex items-center gap-2">
                   <Badge variant={poll.status === 'active' ? 'default' : 'secondary'}>
@@ -300,6 +483,13 @@ export const PollManagement = () => {
                     <span>{poll.options.length} options</span>
                     <span>Created {new Date(poll.created_at).toLocaleDateString()}</span>
                   </div>
+                </div>
+                
+                <div className="flex items-center justify-between pt-2 border-t">
+                  <Button variant="outline" size="sm" className="flex items-center gap-1">
+                    <Eye className="w-3 h-3" />
+                    View Details
+                  </Button>
                 </div>
               </div>
             </CardContent>
