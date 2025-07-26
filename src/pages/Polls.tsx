@@ -334,7 +334,7 @@ const Polls = () => {
             <p className="text-muted-foreground mb-6">
               There are currently no active polls. Check back later or suggest a new poll topic!
             </p>
-            <Button variant="outline">
+            <Button variant="outline" onClick={() => navigate('/poll-request')}>
               Suggest a Poll
             </Button>
           </div>
@@ -350,7 +350,7 @@ const Polls = () => {
               <p className="text-muted-foreground mb-6">
                 Have a question for the community? Create a poll and get valuable insights from our users.
               </p>
-              <Button>
+              <Button onClick={() => navigate('/poll-request')}>
                 Create Poll
               </Button>
             </CardContent>

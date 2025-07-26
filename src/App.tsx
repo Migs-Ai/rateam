@@ -10,6 +10,7 @@ import Auth from "./pages/Auth";
 import Admin from "./pages/Admin";
 import About from "./pages/About";
 import Polls from "./pages/Polls";
+import PollRequest from "./pages/PollRequest";
 import VendorOnboarding from "./pages/VendorOnboarding";
 import VendorDashboard from "./pages/VendorDashboard";
 import VendorDetail from "./pages/VendorDetail";
@@ -39,6 +40,7 @@ const App = () => (
             <Route path="/admin" element={<Admin />} />
             <Route path="/about" element={<About />} />
             <Route path="/polls" element={<Polls />} />
+            <Route path="/poll-request" element={<PollRequest />} />
             <Route path="/vendor-onboarding" element={<VendorOnboarding />} />
             <Route path="/vendor-dashboard" element={<VendorDashboard />} />
             <Route path="/vendor/:id" element={<VendorDetail />} />
