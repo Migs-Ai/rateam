@@ -25,6 +25,10 @@ export const VendorManagement = () => {
           rating,
           review_count,
           created_at,
+          phone,
+          whatsapp,
+          email,
+          description,
           profiles (
             full_name,
             email
@@ -103,6 +107,7 @@ export const VendorManagement = () => {
               <TableHead>Location</TableHead>
               <TableHead>Status</TableHead>
               <TableHead>Rating</TableHead>
+              <TableHead>Contact</TableHead>
               <TableHead>Actions</TableHead>
             </TableRow>
           </TableHeader>
@@ -135,6 +140,24 @@ export const VendorManagement = () => {
                     <span className="text-sm text-muted-foreground">
                       ({vendor.review_count || 0})
                     </span>
+                  </div>
+                </TableCell>
+                <TableCell>
+                  <div className="space-y-1 text-sm">
+                    {vendor.phone && (
+                      <div className="text-muted-foreground">📞 {vendor.phone}</div>
+                    )}
+                    {vendor.whatsapp && (
+                      <div className="text-muted-foreground">💬 {vendor.whatsapp}</div>
+                    )}
+                    {vendor.email && (
+                      <div className="text-muted-foreground">✉️ {vendor.email}</div>
+                    )}
+                    {vendor.description && (
+                      <div className="text-xs text-muted-foreground mt-1 max-w-xs truncate">
+                        {vendor.description}
+                      </div>
+                    )}
                   </div>
                 </TableCell>
                 <TableCell>

@@ -22,6 +22,8 @@ export const ReviewManagement = () => {
           comment,
           status,
           created_at,
+          vendor_reply,
+          vendor_reply_at,
           profiles (
             full_name,
             email
@@ -101,6 +103,7 @@ export const ReviewManagement = () => {
               <TableHead>Comment</TableHead>
               <TableHead>Status</TableHead>
               <TableHead>Date</TableHead>
+              <TableHead>Vendor Reply</TableHead>
               <TableHead>Actions</TableHead>
             </TableRow>
           </TableHeader>
@@ -138,6 +141,20 @@ export const ReviewManagement = () => {
                 </TableCell>
                 <TableCell>
                   {new Date(review.created_at).toLocaleDateString()}
+                </TableCell>
+                <TableCell className="max-w-xs">
+                  {review.vendor_reply ? (
+                    <div className="space-y-1">
+                      <p className="text-sm bg-green-50 dark:bg-green-950/20 p-2 rounded">
+                        {review.vendor_reply}
+                      </p>
+                      <p className="text-xs text-muted-foreground">
+                        {new Date(review.vendor_reply_at!).toLocaleDateString()}
+                      </p>
+                    </div>
+                  ) : (
+                    <span className="text-muted-foreground text-sm">No reply</span>
+                  )}
                 </TableCell>
                 <TableCell>
                   <div className="flex items-center gap-2">

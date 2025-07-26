@@ -189,11 +189,11 @@ const VendorReview = () => {
                   </div>
 
                   <div className="flex items-center space-x-2">
-                    <Checkbox
-                      id="contact-visible"
-                      checked={contactVisible}
-                      onCheckedChange={setContactVisible}
-                    />
+                <Checkbox
+                  id="contact-visible"
+                  checked={contactVisible}
+                  onCheckedChange={(checked) => setContactVisible(checked === true)}
+                />
                     <label
                       htmlFor="contact-visible"
                       className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70"
