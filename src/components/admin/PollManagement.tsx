@@ -7,7 +7,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
-import { Plus, Trash2, Calendar, Users, Vote, Eye, ArrowLeft } from "lucide-react";
+import { Plus, Trash2, Calendar, Users, Vote, Eye, ArrowLeft, Check, X } from "lucide-react";
 import { toast } from "sonner";
 import { Badge } from "@/components/ui/badge";
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
@@ -113,6 +113,42 @@ export const PollManagement = () => {
     },
     onError: (error) => {
       toast.error('Failed to delete poll: ' + error.message);
+    }
+  });
+
+  const approvePollMutation = useMutation({
+    mutationFn: async (pollId: string) => {
+      const { error } = await supabase
+        .from('polls')
+        .update({ status: 'active' })
+        .eq('id', pollId);
+
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['admin-polls'] });
+      toast.success('Poll approved successfully!');
+    },
+    onError: (error) => {
+      toast.error('Failed to approve poll: ' + error.message);
+    }
+  });
+
+  const rejectPollMutation = useMutation({
+    mutationFn: async (pollId: string) => {
+      const { error } = await supabase
+        .from('polls')
+        .delete()
+        .eq('id', pollId);
+
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['admin-polls'] });
+      toast.success('Poll request rejected and deleted!');
+    },
+    onError: (error) => {
+      toast.error('Failed to reject poll: ' + error.message);
     }
   });
 
@@ -451,17 +487,46 @@ export const PollManagement = () => {
                     </CardDescription>
                   )}
                 </div>
-                <Button
-                  variant="outline"
-                  size="icon"
-                  onClick={(e) => {
-                    e.stopPropagation();
-                    deletePollMutation.mutate(poll.id);
-                  }}
-                  disabled={deletePollMutation.isPending}
-                >
-                  <Trash2 className="w-4 h-4" />
-                </Button>
+                {poll.status === 'requested' ? (
+                  <div className="flex gap-2">
+                    <Button
+                      variant="outline"
+                      size="icon"
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        approvePollMutation.mutate(poll.id);
+                      }}
+                      disabled={approvePollMutation.isPending}
+                      className="text-green-600 hover:bg-green-50"
+                    >
+                      <Check className="w-4 h-4" />
+                    </Button>
+                    <Button
+                      variant="outline"
+                      size="icon"
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        rejectPollMutation.mutate(poll.id);
+                      }}
+                      disabled={rejectPollMutation.isPending}
+                      className="text-red-600 hover:bg-red-50"
+                    >
+                      <X className="w-4 h-4" />
+                    </Button>
+                  </div>
+                ) : (
+                  <Button
+                    variant="outline"
+                    size="icon"
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      deletePollMutation.mutate(poll.id);
+                    }}
+                    disabled={deletePollMutation.isPending}
+                  >
+                    <Trash2 className="w-4 h-4" />
+                  </Button>
+                )}
               </div>
             </CardHeader>
             <CardContent onClick={() => setSelectedPoll(poll)}>
