@@ -70,25 +70,13 @@ const VendorReview = () => {
       queryClient.invalidateQueries({ queryKey: ['vendors'] });
       navigate(`/vendor/${id}`);
     },
-    onError: (error: any) => {
+    onError: (error) => {
+      toast({
+        title: "Error",
+        description: "Failed to submit review. Please try again.",
+        variant: "destructive",
+      });
       console.error('Review submission error:', error);
-      
-      // Check if it's a duplicate review error
-      if (error?.code === '23505' && error?.message?.includes('reviews_user_id_vendor_id_key')) {
-        toast({
-          title: "Review already exists",
-          description: "You've already reviewed this business. You can only submit one review per business.",
-          variant: "destructive",
-        });
-        // Redirect back to vendor page after a short delay
-        setTimeout(() => navigate(`/vendor/${id}`), 2000);
-      } else {
-        toast({
-          title: "Error",
-          description: "Failed to submit review. Please try again.",
-          variant: "destructive",
-        });
-      }
     }
   });
 
