@@ -243,7 +243,7 @@ const Polls = () => {
               return (
                 <Card key={poll.id} className="hover:shadow-soft transition-shadow">
                   <CardHeader>
-                    <CardTitle className="line-clamp-2">{poll.title}</CardTitle>
+                    <CardTitle className="line-clamp-2 overflow-hidden text-ellipsis">{poll.title}</CardTitle>
                     <CardDescription className="line-clamp-3">
                       {poll.description}
                     </CardDescription>
