@@ -1,8 +1,6 @@
 import { MapPin, Mail, Phone } from "lucide-react";
-
 const Footer = () => {
-  return (
-    <footer className="bg-card border-t border-border">
+  return <footer className="bg-card border-t border-border">
       <div className="container mx-auto px-4 py-12">
         <div className="grid grid-cols-1 md:grid-cols-4 gap-8">
           {/* Brand */}
@@ -84,13 +82,9 @@ const Footer = () => {
           <p className="text-muted-foreground text-sm">
             © 2024 Rate Am. All rights reserved.
           </p>
-          <p className="text-muted-foreground text-sm mt-2 md:mt-0">
-            Made with ❤️ for local communities
-          </p>
+          <p className="text-muted-foreground text-sm mt-2 md:mt-0">Made for local communities</p>
         </div>
       </div>
-    </footer>
-  );
+    </footer>;
 };
-
 export default Footer;
