@@ -1,6 +1,6 @@
 
 import { useParams, useNavigate } from "react-router-dom";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -13,6 +13,7 @@ import { useToast } from "@/hooks/use-toast";
 import Navigation from "@/components/Navigation";
 import Footer from "@/components/Footer";
 import PageTransition from "@/components/transitions/PageTransition";
+import { ContactOptIn } from "@/components/ContactOptIn";
 
 const VendorReview = () => {
   const { id } = useParams();
@@ -25,6 +26,8 @@ const VendorReview = () => {
   const [comment, setComment] = useState("");
   const [hoveredRating, setHoveredRating] = useState(0);
   const [contactVisible, setContactVisible] = useState(false);
+  const [showContactStep, setShowContactStep] = useState(false);
+  const [userProfile, setUserProfile] = useState<any>(null);
 
   const { data: vendor, isLoading } = useQuery({
     queryKey: ['vendor', id],
@@ -43,6 +46,30 @@ const VendorReview = () => {
     },
     enabled: !!id
   });
+
+  // Fetch user profile to check contact info
+  const { data: profile } = useQuery({
+    queryKey: ['user-profile', user?.id],
+    queryFn: async () => {
+      if (!user) return null;
+      
+      const { data, error } = await supabase
+        .from('profiles')
+        .select('whatsapp, phone')
+        .eq('id', user.id)
+        .single();
+
+      if (error) throw error;
+      return data;
+    },
+    enabled: !!user
+  });
+
+  useEffect(() => {
+    if (profile) {
+      setUserProfile(profile);
+    }
+  }, [profile]);
 
   const submitReview = useMutation({
     mutationFn: async () => {
@@ -81,6 +108,22 @@ const VendorReview = () => {
     }
   });
 
+  const updateProfile = useMutation({
+    mutationFn: async (contactData: { whatsapp?: string; phone?: string }) => {
+      if (!user) throw new Error('User not authenticated');
+      
+      const { error } = await supabase
+        .from('profiles')
+        .update(contactData)
+        .eq('id', user.id);
+
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['user-profile', user?.id] });
+    }
+  });
+
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     
@@ -98,7 +141,31 @@ const VendorReview = () => {
       return;
     }
 
+    // Check if user wants contact visible but doesn't have contact info
+    if (contactVisible && (!userProfile?.whatsapp && !userProfile?.phone)) {
+      setShowContactStep(true);
+      return;
+    }
+
     submitReview.mutate();
+  };
+
+  const handleContactOptIn = (contactData: { allowContact: boolean; whatsapp?: string; phone?: string }) => {
+    if (contactData.allowContact && (contactData.whatsapp || contactData.phone)) {
+      // Update profile with contact info
+      updateProfile.mutate({
+        whatsapp: contactData.whatsapp || undefined,
+        phone: contactData.phone || undefined
+      });
+    }
+    
+    setContactVisible(contactData.allowContact);
+    setShowContactStep(false);
+    
+    // Submit the review
+    setTimeout(() => {
+      submitReview.mutate();
+    }, 100);
   };
 
   if (isLoading) {
@@ -131,6 +198,41 @@ const VendorReview = () => {
         </main>
         <Footer />
       </div>
+    );
+  }
+
+  // Show contact opt-in step
+  if (showContactStep) {
+    return (
+      <PageTransition>
+        <div className="min-h-screen flex flex-col">
+          <Navigation />
+          <main className="flex-1 bg-background">
+            <div className="container mx-auto px-4 py-8">
+              <Button 
+                variant="ghost" 
+                onClick={() => setShowContactStep(false)}
+                className="mb-6"
+              >
+                <ArrowLeft className="w-4 h-4 mr-2" />
+                Back to Review
+              </Button>
+
+              <div className="max-w-2xl mx-auto">
+                <ContactOptIn
+                  title="Contact Information Needed"
+                  description={`To allow ${vendor?.business_name} to contact you about your review, please provide your contact information.`}
+                  onComplete={handleContactOptIn}
+                  initialWhatsapp={userProfile?.whatsapp || ""}
+                  initialPhone={userProfile?.phone || ""}
+                  showSkipOption={false}
+                />
+              </div>
+            </div>
+          </main>
+          <Footer />
+        </div>
+      </PageTransition>
     );
   }
 

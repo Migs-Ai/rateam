@@ -9,6 +9,7 @@ import { Loader2 } from "lucide-react";
 import { useAuth } from "@/hooks/useAuth";
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
+import { ContactOptIn } from "@/components/ContactOptIn";
 
 interface SignUpFormProps {
   email: string;
@@ -21,6 +22,14 @@ interface SignUpFormProps {
   setSelectedRole: (role: "user" | "vendor") => void;
   onEmailConfirmation: () => void;
   onRegistrationSuccess: (email: string, isVendor: boolean) => void;
+}
+
+type SignUpStep = "basic" | "contact" | "vendor";
+
+interface ContactData {
+  allowContact: boolean;
+  whatsapp?: string;
+  phone?: string;
 }
 
 export const SignUpForm = ({ 
@@ -39,6 +48,8 @@ export const SignUpForm = ({
   const { toast } = useToast();
   const [error, setError] = useState("");
   const [isLoading, setIsLoading] = useState(false);
+  const [currentStep, setCurrentStep] = useState<SignUpStep>("basic");
+  const [contactData, setContactData] = useState<ContactData>({ allowContact: false });
   const [businessName, setBusinessName] = useState("");
   const [category, setCategory] = useState("");
   const [location, setLocation] = useState("");
@@ -46,8 +57,28 @@ export const SignUpForm = ({
   const [whatsapp, setWhatsapp] = useState("");
   const [description, setDescription] = useState("");
 
-  const handleSignUp = async (e: React.FormEvent) => {
+  const handleBasicInfoSubmit = (e: React.FormEvent) => {
     e.preventDefault();
+    if (selectedRole === "user") {
+      setCurrentStep("contact");
+    } else {
+      setCurrentStep("vendor");
+    }
+  };
+
+  const handleContactOptIn = (data: ContactData) => {
+    setContactData(data);
+    if (data.whatsapp) setWhatsapp(data.whatsapp);
+    if (data.phone) setPhone(data.phone);
+    
+    if (selectedRole === "vendor") {
+      setCurrentStep("vendor");
+    } else {
+      handleSignUp();
+    }
+  };
+
+  const handleSignUp = async () => {
     setError("");
     setIsLoading(true);
 
@@ -65,25 +96,38 @@ export const SignUpForm = ({
 
       console.log('User signed up successfully');
 
-      // If vendor role is selected, update role and create vendor record
-      if (selectedRole === "vendor") {
-        console.log('Processing vendor registration...');
-        
-        // Wait for the user to be created and trigger to run
-        await new Promise(resolve => setTimeout(resolve, 3000));
-        
-        // Get the current user after signup
-        const { data: { user }, error: userError } = await supabase.auth.getUser();
-        
-        if (userError || !user) {
-          console.error('Error getting user after signup:', userError);
-          toast({
-            title: "Warning",
-            description: "Account created but vendor setup incomplete. Please contact support.",
-            variant: "destructive"
-          });
-        } else {
-          console.log('Processing vendor setup for user:', user.id);
+      // Wait for user creation and trigger to run
+      await new Promise(resolve => setTimeout(resolve, 3000));
+      
+      // Get the current user after signup
+      const { data: { user }, error: userError } = await supabase.auth.getUser();
+      
+      if (userError || !user) {
+        console.error('Error getting user after signup:', userError);
+        toast({
+          title: "Warning",
+          description: "Account created but setup incomplete. Please contact support.",
+          variant: "destructive"
+        });
+      } else {
+        // Update profile with contact info if provided
+        if (contactData.allowContact && (contactData.whatsapp || contactData.phone)) {
+          const { error: profileError } = await supabase
+            .from('profiles')
+            .update({
+              whatsapp: contactData.whatsapp || null,
+              phone: contactData.phone || null
+            })
+            .eq('id', user.id);
+
+          if (profileError) {
+            console.error('Error updating profile with contact info:', profileError);
+          }
+        }
+
+        // If vendor role is selected, update role and create vendor record
+        if (selectedRole === "vendor") {
+          console.log('Processing vendor registration...');
           
           // Update the role to vendor with retry logic
           let roleUpdateSuccess = false;
@@ -156,53 +200,24 @@ export const SignUpForm = ({
     setIsLoading(false);
   };
 
-  return (
-    <form onSubmit={handleSignUp} className="space-y-4">
-      <div className="space-y-2">
-        <Label htmlFor="fullName">Full Name</Label>
-        <Input
-          id="fullName"
-          type="text"
-          value={fullName}
-          onChange={(e) => setFullName(e.target.value)}
-          required
-        />
-      </div>
-      <div className="space-y-2">
-        <Label htmlFor="email">Email</Label>
-        <Input
-          id="email"
-          type="email"
-          value={email}
-          onChange={(e) => setEmail(e.target.value)}
-          required
-        />
-      </div>
-      <div className="space-y-2">
-        <Label htmlFor="password">Password</Label>
-        <Input
-          id="password"
-          type="password"
-          value={password}
-          onChange={(e) => setPassword(e.target.value)}
-          required
-        />
-      </div>
-      <div className="space-y-2">
-        <Label htmlFor="role">I want to join as</Label>
-        <Select value={selectedRole} onValueChange={setSelectedRole}>
-          <SelectTrigger>
-            <SelectValue placeholder="Select your role" />
-          </SelectTrigger>
-          <SelectContent>
-            <SelectItem value="user">Customer</SelectItem>
-            <SelectItem value="vendor">Business Owner</SelectItem>
-          </SelectContent>
-        </Select>
-      </div>
-      
-      {selectedRole === "vendor" && (
-        <div className="space-y-4 border-t pt-4">
+  // Contact Step
+  if (currentStep === "contact") {
+    return (
+      <ContactOptIn
+        title="Stay Connected (Optional)"
+        description="Let vendors contact you for better service and follow-ups on your reviews."
+        onComplete={handleContactOptIn}
+        onSkip={() => handleContactOptIn({ allowContact: false })}
+        showSkipOption={true}
+      />
+    );
+  }
+
+  // Vendor Business Info Step
+  if (currentStep === "vendor") {
+    return (
+      <form onSubmit={(e) => { e.preventDefault(); handleSignUp(); }} className="space-y-4">
+        <div className="space-y-4 border-b pb-4">
           <h3 className="font-medium text-sm text-muted-foreground">Business Information (Optional)</h3>
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <div className="space-y-2">
@@ -257,22 +272,91 @@ export const SignUpForm = ({
             />
           </div>
         </div>
-      )}
+        
+        {error && (
+          <Alert variant="destructive">
+            <AlertDescription>{error}</AlertDescription>
+          </Alert>
+        )}
+        
+        <div className="flex gap-3">
+          <Button 
+            type="button" 
+            variant="outline" 
+            onClick={() => setCurrentStep(selectedRole === "user" ? "contact" : "basic")}
+            className="flex-1"
+          >
+            Back
+          </Button>
+          <Button type="submit" className="flex-1" disabled={isLoading}>
+            {isLoading ? (
+              <>
+                <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                Creating Account...
+              </>
+            ) : (
+              "Create Account"
+            )}
+          </Button>
+        </div>
+      </form>
+    );
+  }
+
+  // Basic Info Step (default)
+  return (
+    <form onSubmit={handleBasicInfoSubmit} className="space-y-4">
+      <div className="space-y-2">
+        <Label htmlFor="fullName">Full Name</Label>
+        <Input
+          id="fullName"
+          type="text"
+          value={fullName}
+          onChange={(e) => setFullName(e.target.value)}
+          required
+        />
+      </div>
+      <div className="space-y-2">
+        <Label htmlFor="email">Email</Label>
+        <Input
+          id="email"
+          type="email"
+          value={email}
+          onChange={(e) => setEmail(e.target.value)}
+          required
+        />
+      </div>
+      <div className="space-y-2">
+        <Label htmlFor="password">Password</Label>
+        <Input
+          id="password"
+          type="password"
+          value={password}
+          onChange={(e) => setPassword(e.target.value)}
+          required
+        />
+      </div>
+      <div className="space-y-2">
+        <Label htmlFor="role">I want to join as</Label>
+        <Select value={selectedRole} onValueChange={setSelectedRole}>
+          <SelectTrigger>
+            <SelectValue placeholder="Select your role" />
+          </SelectTrigger>
+          <SelectContent>
+            <SelectItem value="user">Customer</SelectItem>
+            <SelectItem value="vendor">Business Owner</SelectItem>
+          </SelectContent>
+        </Select>
+      </div>
       
       {error && (
         <Alert variant="destructive">
           <AlertDescription>{error}</AlertDescription>
         </Alert>
       )}
-      <Button type="submit" className="w-full" disabled={isLoading}>
-        {isLoading ? (
-          <>
-            <Loader2 className="w-4 h-4 mr-2 animate-spin" />
-            Creating Account...
-          </>
-        ) : (
-          "Create Account"
-        )}
+      
+      <Button type="submit" className="w-full">
+        Continue
       </Button>
     </form>
   );
