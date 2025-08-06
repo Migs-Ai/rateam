@@ -32,7 +32,7 @@ export const VendorReviewManagement = ({ vendorId }: VendorReviewManagementProps
         throw error;
       }
       console.log('Reviews data:', data);
-      return data;
+      return data || [];
     },
     enabled: !!vendorId
   });
@@ -136,7 +136,7 @@ export const VendorReviewManagement = ({ vendorId }: VendorReviewManagementProps
                 <div className="flex items-center justify-between">
                   <div className="flex items-center gap-2">
                     <div className="font-medium">
-                      {review.profiles?.full_name || 'Anonymous Customer'}
+                      {review.profile_full_name || 'Anonymous Customer'}
                     </div>
                     <div className="flex items-center">
                       {[...Array(5)].map((_, i) => (
@@ -164,7 +164,7 @@ export const VendorReviewManagement = ({ vendorId }: VendorReviewManagementProps
                 )}
 
                 {/* Contact Information (if customer chose to be visible) */}
-                {review.customer_contact_visible && review.profiles && (
+                {review.customer_contact_visible && review.profile_full_name && (
                   <div className="bg-blue-50 dark:bg-blue-950/20 p-3 rounded border border-blue-200 dark:border-blue-800">
                     <div className="flex items-center justify-between mb-2">
                       <p className="text-sm font-medium text-blue-800 dark:text-blue-200">
@@ -173,7 +173,7 @@ export const VendorReviewManagement = ({ vendorId }: VendorReviewManagementProps
                       <Button
                         variant="outline"
                         size="sm"
-                        onClick={() => handleContactCustomer(review.profiles?.email, review.profiles?.whatsapp)}
+                        onClick={() => handleContactCustomer(review.profile_email, review.profile_whatsapp)}
                         className="text-blue-700 dark:text-blue-300 border-blue-300 hover:bg-blue-100 dark:hover:bg-blue-900"
                       >
                         <ExternalLink className="h-3 w-3 mr-1" />
@@ -181,16 +181,16 @@ export const VendorReviewManagement = ({ vendorId }: VendorReviewManagementProps
                       </Button>
                     </div>
                     <div className="flex flex-wrap gap-4 text-sm">
-                      {review.profiles.email && (
+                      {review.profile_email && (
                         <div className="flex items-center gap-1 text-blue-700 dark:text-blue-300">
                           <Mail className="h-3 w-3" />
-                          <span>{review.profiles.email}</span>
+                          <span>{review.profile_email}</span>
                         </div>
                       )}
-                      {review.profiles.whatsapp && (
+                      {review.profile_whatsapp && (
                         <div className="flex items-center gap-1 text-blue-700 dark:text-blue-300">
                           <Phone className="h-3 w-3" />
-                          <span>{review.profiles.whatsapp}</span>
+                          <span>{review.profile_whatsapp}</span>
                         </div>
                       )}
                     </div>

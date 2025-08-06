@@ -369,6 +369,25 @@ export type Database = {
         Args: Record<PropertyKey, never>
         Returns: string
       }
+      get_vendor_reviews_with_profiles: {
+        Args: { p_vendor_id: string }
+        Returns: {
+          id: string
+          user_id: string
+          vendor_id: string
+          rating: number
+          comment: string
+          status: string
+          created_at: string
+          updated_at: string
+          vendor_reply: string
+          vendor_reply_at: string
+          customer_contact_visible: boolean
+          profile_full_name: string
+          profile_email: string
+          profile_whatsapp: string
+        }[]
+      }
       has_role: {
         Args: {
           _user_id: string
