@@ -5,7 +5,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { Badge } from "@/components/ui/badge";
-import { Star, MessageCircle, Send, Phone, Mail } from "lucide-react";
+import { Star, MessageCircle, Send, Phone, Mail, ExternalLink } from "lucide-react";
 import { useToast } from "@/components/ui/use-toast";
 import { useAuth } from "@/hooks/useAuth";
 
@@ -24,14 +24,7 @@ export const VendorReviewManagement = ({ vendorId }: VendorReviewManagementProps
     queryFn: async () => {
       const { data, error } = await supabase
         .from('reviews')
-        .select(`
-          *,
-          profiles!user_id (
-            full_name,
-            email,
-            whatsapp
-          )
-        `)
+        .select('*, profiles(full_name, email, whatsapp)')
         .eq('vendor_id', vendorId)
         .eq('status', 'approved')
         .order('created_at', { ascending: false });
@@ -88,6 +81,14 @@ export const VendorReviewManagement = ({ vendorId }: VendorReviewManagementProps
 
   const updateReplyText = (reviewId: string, text: string) => {
     setReplyTexts(prev => ({ ...prev, [reviewId]: text }));
+  };
+
+  const handleContactCustomer = (email?: string, whatsapp?: string) => {
+    if (email) {
+      window.open(`mailto:${email}`, '_blank');
+    } else if (whatsapp) {
+      window.open(`https://wa.me/${whatsapp.replace(/\D/g, '')}`, '_blank');
+    }
   };
 
   if (isLoading) {
@@ -163,9 +164,20 @@ export const VendorReviewManagement = ({ vendorId }: VendorReviewManagementProps
                 {/* Contact Information (if customer chose to be visible) */}
                 {review.customer_contact_visible && review.profiles && (
                   <div className="bg-blue-50 dark:bg-blue-950/20 p-3 rounded border border-blue-200 dark:border-blue-800">
-                    <p className="text-sm font-medium text-blue-800 dark:text-blue-200 mb-2">
-                      Customer Contact Information:
-                    </p>
+                    <div className="flex items-center justify-between mb-2">
+                      <p className="text-sm font-medium text-blue-800 dark:text-blue-200">
+                        Customer Contact Information:
+                      </p>
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={() => handleContactCustomer(review.profiles?.email, review.profiles?.whatsapp)}
+                        className="text-blue-700 dark:text-blue-300 border-blue-300 hover:bg-blue-100 dark:hover:bg-blue-900"
+                      >
+                        <ExternalLink className="h-3 w-3 mr-1" />
+                        Contact
+                      </Button>
+                    </div>
                     <div className="flex flex-wrap gap-4 text-sm">
                       {review.profiles.email && (
                         <div className="flex items-center gap-1 text-blue-700 dark:text-blue-300">
