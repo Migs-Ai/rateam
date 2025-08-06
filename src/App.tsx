@@ -16,6 +16,7 @@ import VendorOnboarding from "./pages/VendorOnboarding";
 import VendorDashboard from "./pages/VendorDashboard";
 import VendorDetail from "./pages/VendorDetail";
 import VendorReview from "./pages/VendorReview";
+import Profile from "./pages/Profile";
 import NotFound from "./pages/NotFound";
 import ProtectedRoute from "./components/auth/ProtectedRoute";
 
@@ -42,6 +43,7 @@ const AnimatedRoutes = () => {
         <Route path="/poll-request" element={<PollRequest />} />
         <Route path="/vendor-onboarding" element={<VendorOnboarding />} />
         <Route path="/vendor-dashboard" element={<VendorDashboard />} />
+        <Route path="/profile" element={<Profile />} />
         <Route path="/vendor/:id" element={<VendorDetail />} />
         <Route path="/vendor/:id/review" element={<VendorReview />} />
         {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}

@@ -74,6 +74,10 @@ const Navigation = () => {
                     </Button>
                   </DropdownMenuTrigger>
                   <DropdownMenuContent align="end">
+                    <DropdownMenuItem onClick={() => navigate("/profile")}>
+                      <User className="h-4 w-4 mr-2" />
+                      My Profile
+                    </DropdownMenuItem>
                     {isVendor && <DropdownMenuItem onClick={() => navigate("/vendor-dashboard")}>
                         <Building2 className="h-4 w-4 mr-2" />
                         Vendor Dashboard
@@ -121,6 +125,14 @@ const Navigation = () => {
                   }}>
                         <Building2 className="h-4 w-4 mr-2" />
                         {isVendor ? "My Business" : "List Business"}
+                      </Button>
+                      
+                      <Button variant="outline" className="w-full mb-2" onClick={() => {
+                    navigate("/profile");
+                    setIsOpen(false);
+                  }}>
+                        <User className="h-4 w-4 mr-2" />
+                        My Profile
                       </Button>
                       
                       {isVendor && <Button variant="outline" className="w-full mb-2" onClick={() => {
