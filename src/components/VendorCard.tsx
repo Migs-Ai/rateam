@@ -1,11 +1,9 @@
-
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Star, MapPin, Phone, Clock } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { useAuth } from "@/hooks/useAuth";
-
 interface VendorCardProps {
   vendor: {
     id: string;
@@ -21,26 +19,18 @@ interface VendorCardProps {
     featured?: boolean;
   };
 }
-
-const VendorCard = ({ vendor }: VendorCardProps) => {
+const VendorCard = ({
+  vendor
+}: VendorCardProps) => {
   const navigate = useNavigate();
-  const { user } = useAuth();
-
+  const {
+    user
+  } = useAuth();
   const renderStars = (rating: number) => {
-    return Array.from({ length: 5 }, (_, index) => (
-      <Star
-        key={index}
-        className={`w-4 h-4 ${
-          index < Math.floor(rating)
-            ? "text-warning fill-current"
-            : index < rating
-            ? "text-warning fill-current opacity-50"
-            : "text-muted-foreground"
-        }`}
-      />
-    ));
+    return Array.from({
+      length: 5
+    }, (_, index) => <Star key={index} className={`w-4 h-4 ${index < Math.floor(rating) ? "text-warning fill-current" : index < rating ? "text-warning fill-current opacity-50" : "text-muted-foreground"}`} />);
   };
-
   const handleWriteReview = () => {
     if (!user) {
       navigate("/auth");
@@ -49,35 +39,18 @@ const VendorCard = ({ vendor }: VendorCardProps) => {
     // For now, we'll navigate to a simple review page - this can be enhanced later
     navigate(`/vendor/${vendor.id}/review`);
   };
-
   const handleViewDetails = () => {
     navigate(`/vendor/${vendor.id}`);
   };
-
-  return (
-    <Card className="group hover:shadow-soft transition-smooth bg-gradient-card border-0 overflow-hidden">
+  return <Card className="group hover:shadow-soft transition-smooth bg-gradient-card border-0 overflow-hidden">
       {/* Vendor Image */}
       <div className="relative h-48 overflow-hidden">
-        <img
-          src={vendor.image}
-          alt={vendor.name}
-          className="w-full h-full object-cover group-hover:scale-105 transition-smooth"
-        />
-        {vendor.featured && (
-          <Badge className="absolute top-3 left-3 bg-gradient-primary text-white border-0">
+        <img src={vendor.image} alt={vendor.name} className="w-full h-full object-cover group-hover:scale-105 transition-smooth" />
+        {vendor.featured && <Badge className="absolute top-3 left-3 bg-gradient-primary text-white border-0">
             Featured
-          </Badge>
-        )}
+          </Badge>}
         <div className="absolute top-3 right-3 flex items-center space-x-1">
-          {vendor.isOpen !== undefined && (
-            <Badge 
-              variant={vendor.isOpen ? "default" : "secondary"}
-              className={vendor.isOpen ? "bg-success text-white" : ""}
-            >
-              <Clock className="w-3 h-3 mr-1" />
-              {vendor.isOpen ? "Open" : "Closed"}
-            </Badge>
-          )}
+          {vendor.isOpen !== undefined}
         </div>
       </div>
 
@@ -119,35 +92,22 @@ const VendorCard = ({ vendor }: VendorCardProps) => {
             <MapPin className="w-4 h-4 mr-2 text-brand-green" />
             {vendor.location}
           </div>
-          {vendor.phone && (
-            <div className="flex items-center text-sm text-muted-foreground">
+          {vendor.phone && <div className="flex items-center text-sm text-muted-foreground">
               <Phone className="w-4 h-4 mr-2 text-brand-blue" />
               {vendor.phone}
-            </div>
-          )}
+            </div>}
         </div>
 
         {/* Actions */}
         <div className="flex space-x-2">
-          <Button 
-            size="sm" 
-            className="flex-1 bg-gradient-primary text-white border-0 hover:shadow-soft"
-            onClick={handleViewDetails}
-          >
+          <Button size="sm" className="flex-1 bg-gradient-primary text-white border-0 hover:shadow-soft" onClick={handleViewDetails}>
             View Details
           </Button>
-          <Button 
-            variant="outline" 
-            size="sm"
-            className="flex-1 hover:bg-accent"
-            onClick={handleWriteReview}
-          >
+          <Button variant="outline" size="sm" className="flex-1 hover:bg-accent" onClick={handleWriteReview}>
             Write Review
           </Button>
         </div>
       </CardContent>
-    </Card>
-  );
+    </Card>;
 };
-
 export default VendorCard;
