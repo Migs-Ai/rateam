@@ -26,7 +26,7 @@ export const VendorReviewManagement = ({ vendorId }: VendorReviewManagementProps
         .from('reviews')
         .select(`
           *,
-          profiles (
+          profiles!reviews_user_id_fkey (
             full_name,
             email,
             whatsapp
