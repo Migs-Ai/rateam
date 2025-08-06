@@ -62,7 +62,8 @@ export const SignUpForm = ({
     if (selectedRole === "user") {
       setCurrentStep("contact");
     } else {
-      setCurrentStep("vendor");
+      // For vendors, proceed directly to signup
+      handleSignUp();
     }
   };
 
@@ -71,11 +72,8 @@ export const SignUpForm = ({
     if (data.whatsapp) setWhatsapp(data.whatsapp);
     if (data.phone) setPhone(data.phone);
     
-    if (selectedRole === "vendor") {
-      setCurrentStep("vendor");
-    } else {
-      handleSignUp();
-    }
+    // For regular users, proceed to signup after contact step
+    handleSignUp();
   };
 
   const handleSignUp = async () => {
@@ -213,11 +211,56 @@ export const SignUpForm = ({
     );
   }
 
-  // Vendor Business Info Step
-  if (currentStep === "vendor") {
-    return (
-      <form onSubmit={(e) => { e.preventDefault(); handleSignUp(); }} className="space-y-4">
-        <div className="space-y-4 border-b pb-4">
+  // Vendor Business Info Step - removed since it's now inline
+
+  // Basic Info Step (default) - includes vendor form inline
+  return (
+    <form onSubmit={handleBasicInfoSubmit} className="space-y-4">
+      <div className="space-y-2">
+        <Label htmlFor="fullName">Full Name</Label>
+        <Input
+          id="fullName"
+          type="text"
+          value={fullName}
+          onChange={(e) => setFullName(e.target.value)}
+          required
+        />
+      </div>
+      <div className="space-y-2">
+        <Label htmlFor="email">Email</Label>
+        <Input
+          id="email"
+          type="email"
+          value={email}
+          onChange={(e) => setEmail(e.target.value)}
+          required
+        />
+      </div>
+      <div className="space-y-2">
+        <Label htmlFor="password">Password</Label>
+        <Input
+          id="password"
+          type="password"
+          value={password}
+          onChange={(e) => setPassword(e.target.value)}
+          required
+        />
+      </div>
+      <div className="space-y-2">
+        <Label htmlFor="role">I want to join as</Label>
+        <Select value={selectedRole} onValueChange={setSelectedRole}>
+          <SelectTrigger>
+            <SelectValue placeholder="Select your role" />
+          </SelectTrigger>
+          <SelectContent>
+            <SelectItem value="user">Customer</SelectItem>
+            <SelectItem value="vendor">Business Owner</SelectItem>
+          </SelectContent>
+        </Select>
+      </div>
+      
+      {selectedRole === "vendor" && (
+        <div className="space-y-4 border-t pt-4">
           <h3 className="font-medium text-sm text-muted-foreground">Business Information (Optional)</h3>
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <div className="space-y-2">
@@ -272,82 +315,7 @@ export const SignUpForm = ({
             />
           </div>
         </div>
-        
-        {error && (
-          <Alert variant="destructive">
-            <AlertDescription>{error}</AlertDescription>
-          </Alert>
-        )}
-        
-        <div className="flex gap-3">
-          <Button 
-            type="button" 
-            variant="outline" 
-            onClick={() => setCurrentStep(selectedRole === "user" ? "contact" : "basic")}
-            className="flex-1"
-          >
-            Back
-          </Button>
-          <Button type="submit" className="flex-1" disabled={isLoading}>
-            {isLoading ? (
-              <>
-                <Loader2 className="w-4 h-4 mr-2 animate-spin" />
-                Creating Account...
-              </>
-            ) : (
-              "Create Account"
-            )}
-          </Button>
-        </div>
-      </form>
-    );
-  }
-
-  // Basic Info Step (default)
-  return (
-    <form onSubmit={handleBasicInfoSubmit} className="space-y-4">
-      <div className="space-y-2">
-        <Label htmlFor="fullName">Full Name</Label>
-        <Input
-          id="fullName"
-          type="text"
-          value={fullName}
-          onChange={(e) => setFullName(e.target.value)}
-          required
-        />
-      </div>
-      <div className="space-y-2">
-        <Label htmlFor="email">Email</Label>
-        <Input
-          id="email"
-          type="email"
-          value={email}
-          onChange={(e) => setEmail(e.target.value)}
-          required
-        />
-      </div>
-      <div className="space-y-2">
-        <Label htmlFor="password">Password</Label>
-        <Input
-          id="password"
-          type="password"
-          value={password}
-          onChange={(e) => setPassword(e.target.value)}
-          required
-        />
-      </div>
-      <div className="space-y-2">
-        <Label htmlFor="role">I want to join as</Label>
-        <Select value={selectedRole} onValueChange={setSelectedRole}>
-          <SelectTrigger>
-            <SelectValue placeholder="Select your role" />
-          </SelectTrigger>
-          <SelectContent>
-            <SelectItem value="user">Customer</SelectItem>
-            <SelectItem value="vendor">Business Owner</SelectItem>
-          </SelectContent>
-        </Select>
-      </div>
+      )}
       
       {error && (
         <Alert variant="destructive">
@@ -355,8 +323,15 @@ export const SignUpForm = ({
         </Alert>
       )}
       
-      <Button type="submit" className="w-full">
-        Continue
+      <Button type="submit" className="w-full" disabled={isLoading}>
+        {isLoading ? (
+          <>
+            <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+            Creating Account...
+          </>
+        ) : (
+          selectedRole === "user" ? "Continue" : "Create Account"
+        )}
       </Button>
     </form>
   );
