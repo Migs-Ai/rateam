@@ -24,12 +24,19 @@ export const VendorReviewManagement = ({ vendorId }: VendorReviewManagementProps
     queryFn: async () => {
       const { data, error } = await supabase
         .from('reviews')
-        .select('*, profiles(full_name, email, whatsapp)')
+        .select(`
+          *,
+          profiles!user_id(full_name, email, whatsapp)
+        `)
         .eq('vendor_id', vendorId)
         .eq('status', 'approved')
         .order('created_at', { ascending: false });
 
-      if (error) throw error;
+      if (error) {
+        console.error('Query error:', error);
+        throw error;
+      }
+      console.log('Reviews data:', data);
       return data;
     },
     enabled: !!vendorId
