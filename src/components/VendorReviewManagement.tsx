@@ -23,14 +23,9 @@ export const VendorReviewManagement = ({ vendorId }: VendorReviewManagementProps
     queryKey: ['vendor-reviews-management', vendorId],
     queryFn: async () => {
       const { data, error } = await supabase
-        .from('reviews')
-        .select(`
-          *,
-          profiles!user_id(full_name, email, whatsapp)
-        `)
-        .eq('vendor_id', vendorId)
-        .eq('status', 'approved')
-        .order('created_at', { ascending: false });
+        .rpc('get_vendor_reviews_with_profiles', { 
+          p_vendor_id: vendorId 
+        });
 
       if (error) {
         console.error('Query error:', error);
