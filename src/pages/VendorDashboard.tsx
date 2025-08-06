@@ -13,6 +13,7 @@ import { VendorReviewManagement } from "@/components/VendorReviewManagement";
 import { ImageUpload } from "@/components/ImageUpload";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { useToast } from "@/hooks/use-toast";
+import PageTransition from "@/components/transitions/PageTransition";
 
 const VendorDashboard = () => {
   const { user } = useAuth();
@@ -142,7 +143,8 @@ const VendorDashboard = () => {
   }
 
   return (
-    <div className="min-h-screen bg-background p-4">
+    <PageTransition>
+      <div className="min-h-screen bg-background p-4">
       <div className="max-w-6xl mx-auto space-y-6">
         {/* Header */}
         <div className="flex items-center justify-between">
@@ -289,6 +291,7 @@ const VendorDashboard = () => {
         <VendorReviewManagement vendorId={vendor.id} />
       </div>
     </div>
+    </PageTransition>
   );
 };
 

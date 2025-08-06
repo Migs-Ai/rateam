@@ -10,6 +10,7 @@ import { useAuth } from "@/hooks/useAuth";
 import { useToast } from "@/hooks/use-toast";
 import { useMutation } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
+import PageTransition from "@/components/transitions/PageTransition";
 
 const PollRequest = () => {
   const navigate = useNavigate();
@@ -108,7 +109,8 @@ const PollRequest = () => {
   };
 
   return (
-    <div className="min-h-screen bg-background">
+    <PageTransition>
+      <div className="min-h-screen bg-background">
       <div className="container mx-auto px-4 py-12 max-w-2xl">
         {/* Header */}
         <div className="mb-8">
@@ -256,7 +258,8 @@ const PollRequest = () => {
           </CardContent>
         </Card>
       </div>
-    </div>
+      </div>
+    </PageTransition>
   );
 };
 

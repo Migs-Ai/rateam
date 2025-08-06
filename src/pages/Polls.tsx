@@ -9,6 +9,7 @@ import { Calendar, Users, Vote, CheckCircle } from "lucide-react";
 import { useAuth } from "@/hooks/useAuth";
 import { useToast } from "@/hooks/use-toast";
 import { useNavigate } from "react-router-dom";
+import PageTransition from "@/components/transitions/PageTransition";
 
 const Polls = () => {
   const { user } = useAuth();
@@ -187,7 +188,8 @@ const Polls = () => {
   }
 
   return (
-    <div className="min-h-screen bg-background">
+    <PageTransition>
+      <div className="min-h-screen bg-background">
       <div className="container mx-auto px-4 py-12">
         {/* Header */}
         <div className="text-center mb-12">
@@ -357,7 +359,8 @@ const Polls = () => {
           </Card>
         </div>
       </div>
-    </div>
+      </div>
+    </PageTransition>
   );
 };
 

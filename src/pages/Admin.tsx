@@ -3,6 +3,7 @@ import AdminDashboard from "@/components/admin/AdminDashboard";
 import { useUserRole } from "@/hooks/useUserRole";
 import { useAuth } from "@/hooks/useAuth";
 import { Navigate } from "react-router-dom";
+import PageTransition from "@/components/transitions/PageTransition";
 
 const Admin = () => {
   const { user, loading: authLoading } = useAuth();
@@ -46,7 +47,11 @@ const Admin = () => {
     );
   }
 
-  return <AdminDashboard />;
+  return (
+    <PageTransition>
+      <AdminDashboard />
+    </PageTransition>
+  );
 };
 
 export default Admin;

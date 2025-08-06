@@ -1,8 +1,13 @@
 
 import AuthPage from "@/components/auth/AuthPage";
+import PageTransition from "@/components/transitions/PageTransition";
 
 const Auth = () => {
-  return <AuthPage />;
+  return (
+    <PageTransition>
+      <AuthPage />
+    </PageTransition>
+  );
 };
 
 export default Auth;

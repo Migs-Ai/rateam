@@ -12,6 +12,7 @@ import { useAuth } from "@/hooks/useAuth";
 import { useToast } from "@/hooks/use-toast";
 import Navigation from "@/components/Navigation";
 import Footer from "@/components/Footer";
+import PageTransition from "@/components/transitions/PageTransition";
 
 const VendorReview = () => {
   const { id } = useParams();
@@ -134,7 +135,8 @@ const VendorReview = () => {
   }
 
   return (
-    <div className="min-h-screen flex flex-col">
+    <PageTransition>
+      <div className="min-h-screen flex flex-col">
       <Navigation />
       <main className="flex-1 bg-background">
         <div className="container mx-auto px-4 py-8">
@@ -235,7 +237,8 @@ const VendorReview = () => {
         </div>
       </main>
       <Footer />
-    </div>
+      </div>
+    </PageTransition>
   );
 };
 

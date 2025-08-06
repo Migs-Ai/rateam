@@ -15,6 +15,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 import { useCategories } from "@/hooks/useCategories";
 import { Progress } from "@/components/ui/progress";
+import PageTransition from "@/components/transitions/PageTransition";
 
 const VendorOnboarding = () => {
   const { user } = useAuth();
@@ -311,7 +312,8 @@ const VendorOnboarding = () => {
   };
 
   return (
-    <div className="min-h-screen bg-background p-4">
+    <PageTransition>
+      <div className="min-h-screen bg-background p-4">
       <div className="max-w-2xl mx-auto">
         <Card>
           <CardHeader className="text-center">
@@ -366,7 +368,8 @@ const VendorOnboarding = () => {
           </CardContent>
         </Card>
       </div>
-    </div>
+      </div>
+    </PageTransition>
   );
 };
 
