@@ -87,7 +87,21 @@ export const SignUpForm = ({
       
       if (error) {
         console.error('Signup error:', error);
-        setError(error.message);
+        
+        // Handle specific error cases with user-friendly messages
+        if (error.message.includes('User already registered') || 
+            error.message.includes('already been registered') ||
+            error.message.includes('Email already in use') ||
+            error.code === 'user_already_exists') {
+          setError(`This email address is already registered. Please try signing in instead, or use a different email address.`);
+        } else if (error.message.includes('Invalid email')) {
+          setError('Please enter a valid email address.');
+        } else if (error.message.includes('Password')) {
+          setError('Password must be at least 6 characters long.');
+        } else {
+          setError(error.message);
+        }
+        
         setIsLoading(false);
         return;
       }
@@ -319,7 +333,24 @@ export const SignUpForm = ({
       
       {error && (
         <Alert variant="destructive">
-          <AlertDescription>{error}</AlertDescription>
+          <AlertDescription>
+            {error}
+            {error.includes('already registered') && (
+              <div className="mt-2">
+                <span className="text-sm">Already have an account? </span>
+                <button 
+                  type="button"
+                  className="text-sm underline hover:no-underline"
+                  onClick={() => {
+                    // This would switch to sign-in tab - you'll need to pass this function from parent
+                    window.location.href = '/auth?tab=signin';
+                  }}
+                >
+                  Sign in here
+                </button>
+              </div>
+            )}
+          </AlertDescription>
         </Alert>
       )}
       
