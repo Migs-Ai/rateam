@@ -169,6 +169,7 @@ export type Database = {
           email: string | null
           full_name: string | null
           id: string
+          phone: string | null
           updated_at: string | null
           whatsapp: string | null
         }
@@ -178,6 +179,7 @@ export type Database = {
           email?: string | null
           full_name?: string | null
           id: string
+          phone?: string | null
           updated_at?: string | null
           whatsapp?: string | null
         }
@@ -187,6 +189,7 @@ export type Database = {
           email?: string | null
           full_name?: string | null
           id?: string
+          phone?: string | null
           updated_at?: string | null
           whatsapp?: string | null
         }
@@ -386,6 +389,7 @@ export type Database = {
           profile_full_name: string
           profile_email: string
           profile_whatsapp: string
+          profile_phone: string
         }[]
       }
       has_role: {

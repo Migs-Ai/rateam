@@ -190,7 +190,13 @@ export const VendorReviewManagement = ({ vendorId }: VendorReviewManagementProps
                       {review.profile_whatsapp && (
                         <div className="flex items-center gap-1 text-blue-700 dark:text-blue-300">
                           <Phone className="h-3 w-3" />
-                          <span>{review.profile_whatsapp}</span>
+                          <span>WhatsApp: {review.profile_whatsapp}</span>
+                        </div>
+                      )}
+                      {review.profile_phone && (
+                        <div className="flex items-center gap-1 text-blue-700 dark:text-blue-300">
+                          <Phone className="h-3 w-3" />
+                          <span>Phone: {review.profile_phone}</span>
                         </div>
                       )}
                     </div>
