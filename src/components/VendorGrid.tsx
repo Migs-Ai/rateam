@@ -40,35 +40,35 @@ const VendorGrid = ({ heroSearchQuery }: VendorGridProps) => {
   }
 
   return (
-    <section id="vendors" className="py-16 bg-background">
-      <div className="container mx-auto px-4">
+    <section id="vendors" className="py-12 bg-background">
+      <div className="container mx-auto px-6">
         {/* Header */}
-        <div className="text-center mb-12">
-          <h2 className="text-3xl md:text-4xl font-bold text-foreground mb-4">
-            Discover Local <span className="bg-gradient-primary bg-clip-text text-transparent">Vendors</span>
+        <div className="mb-8">
+          <h2 className="text-2xl md:text-3xl font-bold text-foreground mb-2">
+            Local Businesses
           </h2>
-          <p className="text-lg text-muted-foreground max-w-2xl mx-auto">
+          <p className="text-muted-foreground">
             Browse through our curated list of local businesses and discover your next favorite spot.
           </p>
         </div>
 
         {/* Filters */}
-        <div className="bg-card rounded-2xl p-6 shadow-card mb-8">
-          <div className="flex flex-col lg:flex-row gap-4 items-center">
+        <div className="bg-card rounded-lg border border-border p-4 mb-6">
+          <div className="flex flex-col lg:flex-row gap-3 items-center">
             {/* Search */}
             <div className="relative flex-1 max-w-md">
               <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-muted-foreground" />
               <Input
-                placeholder="Search vendors..."
+                placeholder="Search businesses..."
                 value={searchTerm}
                 onChange={(e) => setSearchTerm(e.target.value)}
-                className="pl-10"
+                className="pl-10 h-9"
               />
             </div>
 
             {/* Category Filter */}
             <Select value={selectedCategory} onValueChange={setSelectedCategory} disabled={categoriesLoading}>
-              <SelectTrigger className="w-full lg:w-48">
+              <SelectTrigger className="w-full lg:w-48 h-9">
                 <SelectValue placeholder="Category" />
               </SelectTrigger>
               <SelectContent>
@@ -82,7 +82,7 @@ const VendorGrid = ({ heroSearchQuery }: VendorGridProps) => {
 
             {/* Sort By */}
             <Select value={sortBy} onValueChange={setSortBy}>
-              <SelectTrigger className="w-full lg:w-40">
+              <SelectTrigger className="w-full lg:w-40 h-9">
                 <SelectValue placeholder="Sort by" />
               </SelectTrigger>
               <SelectContent>

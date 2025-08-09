@@ -1,5 +1,7 @@
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
+import { BackButton } from "@/components/ui/back-button";
+import Navigation from "@/components/Navigation";
 import { Users, Star, Building2, MessageSquare } from "lucide-react";
 import PageTransition from "@/components/transitions/PageTransition";
 
@@ -7,16 +9,18 @@ const About = () => {
   return (
     <PageTransition>
       <div className="min-h-screen bg-background">
-      <div className="container mx-auto px-4 py-12">
-        {/* Hero Section */}
-        <div className="text-center mb-16">
-          <h1 className="text-4xl md:text-6xl font-bold text-foreground mb-6">
-            About <span className="text-primary">Rate Am</span>
-          </h1>
-          <p className="text-xl text-muted-foreground max-w-3xl mx-auto">
-            Your trusted platform for discovering, rating, and connecting with local vendors and service providers.
-          </p>
-        </div>
+        <Navigation />
+        <div className="container mx-auto px-6 py-8">
+          <BackButton to="/" />
+          {/* Hero Section */}
+          <div className="text-center mb-12">
+            <h1 className="text-3xl md:text-4xl font-bold text-foreground mb-4">
+              About <span className="text-primary">RateAm</span>
+            </h1>
+            <p className="text-lg text-muted-foreground max-w-2xl mx-auto">
+              Your trusted platform for discovering, rating, and connecting with local vendors and service providers.
+            </p>
+          </div>
 
         {/* Mission Section */}
         <div className="grid gap-8 md:grid-cols-2 mb-16">

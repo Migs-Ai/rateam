@@ -42,33 +42,35 @@ const Navigation = () => {
     href: "/polls",
     label: "Polls"
   }];
-  return <nav className="sticky top-0 z-50 w-full border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
-      <div className="container mx-auto px-4">
-        <div className="flex h-16 items-center justify-between">
+  return <nav className="sticky top-0 z-50 w-full border-b bg-card">
+      <div className="container mx-auto px-6">
+        <div className="flex h-14 items-center justify-between">
           {/* Logo */}
           <Link to="/" className="flex items-center space-x-2">
-            
-            <span className="text-xl font-bold bg-gradient-primary bg-clip-text text-transparent">RateAm</span>
+            <div className="w-7 h-7 bg-primary rounded-lg flex items-center justify-center">
+              <span className="text-primary-foreground font-bold text-xs">RA</span>
+            </div>
+            <span className="text-lg font-semibold text-foreground">RateAm</span>
           </Link>
 
           {/* Desktop Navigation */}
-          <div className="hidden md:flex items-center space-x-8">
-            {navItems.map(item => <Link key={item.href} to={item.href} className="text-muted-foreground transition-colors hover:text-foreground">
+          <div className="hidden md:flex items-center space-x-6">
+            {navItems.map(item => <Link key={item.href} to={item.href} className="text-sm font-medium text-muted-foreground hover:text-foreground px-3 py-2 rounded-md transition-colors">
                 {item.label}
               </Link>)}
           </div>
 
           {/* Desktop Auth/User Menu */}
-          <div className="hidden md:flex items-center space-x-4">
+          <div className="hidden md:flex items-center space-x-3">
             {user ? <>
-                <Button variant="outline" size="sm" onClick={handleListBusiness}>
+                <Button variant="outline" size="sm" onClick={handleListBusiness} className="h-9 text-sm">
                   <Building2 className="h-4 w-4 mr-2" />
                   {isVendor ? "My Business" : "List Business"}
                 </Button>
                 
                 <DropdownMenu>
                   <DropdownMenuTrigger asChild>
-                    <Button variant="ghost" size="sm">
+                    <Button variant="ghost" size="sm" className="h-9 px-3">
                       <User className="h-4 w-4 mr-2" />
                       Menu
                     </Button>
@@ -94,11 +96,11 @@ const Navigation = () => {
                   </DropdownMenuContent>
                 </DropdownMenu>
               </> : <>
-                <Button variant="outline" size="sm" onClick={handleListBusiness}>
+                <Button variant="outline" size="sm" onClick={handleListBusiness} className="h-9 text-sm">
                   <Building2 className="h-4 w-4 mr-2" />
                   List Business
                 </Button>
-                <Button size="sm" onClick={() => navigate("/auth")}>
+                <Button size="sm" onClick={() => navigate("/auth")} className="h-9 text-sm">
                   Sign In
                 </Button>
               </>}

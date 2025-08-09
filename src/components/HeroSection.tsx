@@ -53,59 +53,49 @@ const HeroSection = ({ onSearch }: HeroSectionProps) => {
   ];
 
   return (
-    <section className="relative bg-gradient-hero py-20 overflow-hidden">
-      {/* Background Pattern */}
-      <div className="absolute inset-0 opacity-10">
-        <div className="absolute top-10 left-10 w-20 h-20 bg-brand-green rounded-full blur-xl"></div>
-        <div className="absolute top-32 right-20 w-16 h-16 bg-brand-blue rounded-full blur-lg"></div>
-        <div className="absolute bottom-20 left-1/4 w-24 h-24 bg-brand-teal rounded-full blur-2xl"></div>
-      </div>
-
-      <div className="container mx-auto px-4 text-center relative z-10">
+    <section className="relative bg-card py-16 overflow-hidden border-b">
+      <div className="container mx-auto px-6 text-center relative z-10">
         {/* Main Hero Content */}
-        <div className="max-w-4xl mx-auto mb-12">
-          <h1 className="text-4xl md:text-6xl font-bold text-foreground mb-6 leading-tight">
-            Discover & Rate
-            <span className="bg-gradient-primary bg-clip-text text-transparent"> Local Vendors</span>
+        <div className="max-w-5xl mx-auto mb-12">
+          <h1 className="text-3xl md:text-5xl font-bold text-foreground mb-4 leading-tight">
+            Where to?
           </h1>
-          <p className="text-lg md:text-xl text-muted-foreground mb-8 max-w-2xl mx-auto">
-            Connect with your community's best businesses. Share experiences, read reviews, 
-            and help local vendors thrive through authentic feedback.
+          <p className="text-base md:text-lg text-muted-foreground mb-8 max-w-2xl mx-auto">
+            Discover amazing local businesses and share your experiences with the community.
           </p>
 
-          {/* Search Bar */}
-          <form onSubmit={handleSearch} className="max-w-xl mx-auto mb-8">
-            <div className="relative">
+          {/* Search Bar - TripAdvisor style */}
+          <form onSubmit={handleSearch} className="max-w-2xl mx-auto mb-8">
+            <div className="relative bg-card border-2 border-border rounded-full shadow-sm hover:shadow-md transition-all duration-200">
               <Input
                 type="text"
-                placeholder="Search for restaurants, services, shops..."
+                placeholder="Things to do, restaurants, hotels..."
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
-                className="h-14 pl-12 pr-32 text-lg border-2 border-transparent bg-card shadow-hero focus:border-primary rounded-full"
+                className="h-14 pl-12 pr-24 text-base border-0 bg-transparent rounded-full focus-visible:ring-2 focus-visible:ring-primary"
               />
               <Search className="absolute left-4 top-1/2 transform -translate-y-1/2 w-5 h-5 text-muted-foreground" />
               <Button
                 type="submit"
-                className="absolute right-2 top-1/2 transform -translate-y-1/2 h-10 px-6 bg-gradient-primary text-white border-0 rounded-full hover:shadow-soft"
+                className="absolute right-2 top-1/2 transform -translate-y-1/2 h-10 px-6 bg-primary text-primary-foreground rounded-full hover:bg-primary/90"
               >
                 Search
               </Button>
             </div>
           </form>
 
-          {/* CTA Buttons */}
-          <div className="flex flex-col sm:flex-row gap-4 justify-center items-center">
+          {/* Quick Action Buttons */}
+          <div className="flex flex-wrap gap-3 justify-center items-center mb-12">
             <Button 
-              size="lg" 
-              className="bg-gradient-primary text-white border-0 hover:shadow-soft h-12 px-8 rounded-full"
+              variant="outline"
+              className="h-10 px-6 rounded-full border-primary text-primary hover:bg-primary hover:text-primary-foreground"
               onClick={handleStartReviewing}
             >
-              Start Reviewing
+              Browse Reviews
             </Button>
             <Button 
               variant="outline" 
-              size="lg"
-              className="h-12 px-8 rounded-full border-2 hover:bg-accent"
+              className="h-10 px-6 rounded-full"
               onClick={handleListBusiness}
             >
               List Your Business
@@ -113,15 +103,15 @@ const HeroSection = ({ onSearch }: HeroSectionProps) => {
           </div>
         </div>
 
-        {/* Stats Section */}
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-8 max-w-3xl mx-auto">
+        {/* Clean Stats Section */}
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-6 max-w-4xl mx-auto">
           {stats.map((stat, index) => (
-            <div key={index} className="bg-card/60 backdrop-blur-sm rounded-2xl p-6 shadow-card hover:shadow-soft transition-smooth">
-              <div className="flex items-center justify-center w-12 h-12 bg-gradient-primary rounded-xl mx-auto mb-3">
-                <stat.icon className="w-6 h-6 text-white" />
+            <div key={index} className="bg-card rounded-xl p-6 border border-border hover:shadow-md transition-all duration-200">
+              <div className="flex items-center justify-center w-10 h-10 bg-primary/10 rounded-lg mx-auto mb-3">
+                <stat.icon className="w-5 h-5 text-primary" />
               </div>
-              <div className="text-2xl font-bold text-foreground mb-1">{stat.value}</div>
-              <div className="text-muted-foreground">{stat.label}</div>
+              <div className="text-xl font-semibold text-foreground mb-1">{stat.value}</div>
+              <div className="text-sm text-muted-foreground">{stat.label}</div>
             </div>
           ))}
         </div>

@@ -5,6 +5,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
+import { BackButton } from "@/components/ui/back-button";
 import { Star, MapPin, Phone, Mail, MessageCircle, ArrowLeft, Clock } from "lucide-react";
 import { useAuth } from "@/hooks/useAuth";
 import Navigation from "@/components/Navigation";
@@ -130,16 +131,9 @@ const VendorDetail = () => {
       <div className="min-h-screen flex flex-col">
       <Navigation />
       <main className="flex-1 bg-background">
-        <div className="container mx-auto px-4 py-8">
+        <div className="container mx-auto px-6 py-8">
           {/* Back Button */}
-          <Button 
-            variant="ghost" 
-            onClick={() => navigate("/")}
-            className="mb-6"
-          >
-            <ArrowLeft className="w-4 h-4 mr-2" />
-            Back to Vendors
-          </Button>
+          <BackButton to="/" label="Back to Vendors" />
 
           <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
             {/* Main Content */}

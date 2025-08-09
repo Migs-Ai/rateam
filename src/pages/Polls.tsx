@@ -3,6 +3,8 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Progress } from "@/components/ui/progress";
+import { BackButton } from "@/components/ui/back-button";
+import Navigation from "@/components/Navigation";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { Calendar, Users, Vote, CheckCircle } from "lucide-react";
@@ -190,16 +192,19 @@ const Polls = () => {
   return (
     <PageTransition>
       <div className="min-h-screen bg-background">
-      <div className="container mx-auto px-4 py-12">
-        {/* Header */}
-        <div className="text-center mb-12">
-          <h1 className="text-4xl md:text-5xl font-bold text-foreground mb-4">
-            Community <span className="text-primary">Polls</span>
-          </h1>
-          <p className="text-lg text-muted-foreground max-w-2xl mx-auto">
-            Have your say! Participate in community polls and help shape the direction of our platform.
-          </p>
-        </div>
+        <Navigation />
+        <div className="container mx-auto px-6 py-8">
+          <BackButton to="/" />
+          
+          {/* Header */}
+          <div className="text-center mb-12">
+            <h1 className="text-3xl md:text-4xl font-bold text-foreground mb-4">
+              Community <span className="text-primary">Polls</span>
+            </h1>
+            <p className="text-lg text-muted-foreground max-w-2xl mx-auto">
+              Have your say! Participate in community polls and help shape the direction of our platform.
+            </p>
+          </div>
 
         {/* Stats */}
         <div className="grid gap-4 md:grid-cols-3 mb-8">
